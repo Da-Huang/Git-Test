@@ -1,10 +1,7 @@
 #include <iostream>
 using namespace std;
-/**
- * This is maint branch 
- **/
 
 int main() {
+	cout << "Hello World!" << endl;
 	return 0;
 }
-
