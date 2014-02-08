@@ -1,2 +1,2 @@
 #include <iostream>
-Test for conflict create.
+using namespace std;
