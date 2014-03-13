@@ -1,72 +1,83 @@
 <p>Proposal Title: BooleanScorer should sometimes be used for MUST clauses in Lucene</p>
+<div class='dividor'></div>
 <p>Student Name: Da Huang</p>
 <p>Student E-mail: dhuang.cn@gmail.com</p>
 <p>Student Mobile: +8613718862905</p>
+<div class='dividor'></div>
 <p>Organization/Project: The Apache Software Foundation (ASF)
 <p>Assigned Mentor:</p>
 
+<div class='dividor'></div>
 
-<h2>Introduction to My Proposal</h2>
+<h2>Introduction to the Project</h2>
 <p>Boolean Query is one of the most important types of query in an Information Retrieval System. Lucene has done several optimizations for that. The kernel modular to implement Boolean Query in lucene is <b>Scorer</b>, which can not only score a document, but also provide methods for collecting Hit Documents. There are mainly two Scorers, <b>BooleanScorer</b> and <b>BooleanScorer2</b> (Their natures can be found in <a href='#table1'>Table 1</a>), to deal with Boolean Query on current trunk. The class BooleanQuery would choose one of them as the scorer returning to the its caller.</p>
 <p>Today lucene <b>only</b> uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But such way to make the choice is too easy and naive. What I would like to do in this project is to develop a more clever way for BooleanQuery to choose which Scorer to be uses.</p>
-<p>However, the development would be not be so easy, some Scorers have to be improved to fit the new way.</p>
+<p>The key to implementing the project is to make <b>BooleanScorer</b> support MUST clause, and then check the influence of MUST clause on BooleanScorer's speed by testing.</p>
+
+<div class='dividor'></div>
 
 <h2>Project Goals</h2>
 <p>The project shall deliver four components as follows:</p>
-<p class=sub1>1) BooleanScorer which resupports MUST clause.</p>
+<p class=sub1>1) BooleanScorer which supports MUST clause friendly i.e. <b>.advance()</b> should be used trickly to skip docs.</p>
 <p class=sub1>2) A better rule for BooleanQuery to choose Scorer.</p>
-<p class=sub1>3) A better <b>rewrite</b> method in BooleanQuery.</p>
-<!--<p class=sub1>4) Revelant Javadocs and report.-->
-<!--<p>Besides, <i>A more complete BooleanScorer which can be as Mid-Level Scorer</i> may be delivered.-->
+<p class=sub1>3) A better <b>.rewrite()</b> method in BooleanQuery.</p>
+<p class=sub1>4) Revelant Javadocs and reports.</p>
 
-<p class=sub1>4) A more complete BooleanScorer which can be as Mid-Level Scorer.</p>
-<p>Revelant Javadoc and report shall be written for the components above.</p>
+<div class='dividor'></div>
 
-<h3>Quantifiable Results for the Apache Community</h3>
-<p class=sub1>1) Faster BooleanQuery for Lucene.</p>
-<p class=sub1>2) .</p>
-<p class=sub1>3) .</p>
-<p class=sub1>4) .</p>
+<h2>Quantifiable Results for the Apache Community</h2>
+<p class=sub1>1) Faster BooleanQuery for lucene.</p>
+<!--<p class=sub1>2) More powerful and efficient BooleanScorer which supports .</p>
+-->
+<div class='dividor'></div>
 
-
-<h2>Detailed Description</h2>
+<h2>Project Details</h2>
 <h3>BooleanScorer vs. BooleanScorer2</h3>
-<div class='figure_div'>
+Beforing getting down to the optimation, I would like analyze the two Scorers first.
+<div class='table_div'>
 <div id='table1' class='tag'>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</div>
 <table border='1'>
-<tr><th>Scorer Name</th>
+<tr><th>Scorer</th>
 <th>Usability</th><th>Disjunction Query</th><th>Conjunction Query</th>
 <th>MUST Clause</th>
 </tr>
 <tr><th>BooleanScorer</th>
-<td>As Top Scorer Only</td><td>Faster</td><td>Slower</td><td>Used to, Not Now</td>
+<td>As Top Scorer Only</td><td>Faster</td><td>Not Supported Now</td><td>Used to, Not Now</td>
 </tr>
 <tr><th>BooleanScorer2</th>
-<td>No Level Limitation</td><td>Slower</td><td>Faster</td><td>Yes</td>
+<td>No Level Limitation</td><td>Slower</td><td>Fast</td><td>Yes</td>
 </tr>
 </table>
 </div>
-<p>Table 1 illustrates some important natures of BooleanScorer and BooleanScorer2 on the current lucene trunk. The great difference between these two Scorer is due to their different ideas on implementation:
-</p>
-<p class=sub1>1) BooleanScorer is implemented by using an array to score windows of 2K. </p>
+<p>Table 1 illustrates some important natures of BooleanScorer and BooleanScorer2 on the current lucene trunk. The great difference between these two Scorer is due to their different ideas on implementation:</p>
+<p class=sub1>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query</p>
+<p class=sub1>2) BooleanScorer2 is implemented in a much more normal way.</p>
+<h3>Make BooleanScorer Support MUST Clause</h3>
+
+<h3>Improve the Rule to Choose Scorer</h3>
+
+<h3>Improve .rewrite() in BooleanQuery</h3>
+
+<div class='dividor'></div>
+
 
 <h2>Schedule</h2>
 <p> My schedule is showed on Table 2.</p>
-<div class='figure_div'>
-<div class='tag'>Table 2.&nbsp;&nbsp;Schedule</div>
+<div class='table_div'>
+<div class='tag'>Table 2.&nbsp;&nbsp;Project Schedule</div>
 <table border='1' style='text-align:center;'>
 <tr><th>Timeline</th><th>Tasks</th></tr>
 <tr>
 <td>April 22 - May 16</td>
 <td class='paragraph_td'>
-<p>- Get to know the code and the community.</p>
+<p>- Get to know more about the code.</p>
 <p>- Discuss with the mentor about some details on the code.</p>
-<p>- Check the plan to go right.</p>
+<p>- Fix bugs on the original plan.</p>
 </td></tr>
 <tr>
 <td>May 19 - May 24</td>
 <td class='paragraph_td'>
-<p>- Analyze the requirements of a general BOW ranking framework.</p>
+<p>- Analyze .</p>
 </td></tr>
 <tr>
 <td>May 25 - May 31</td>
@@ -80,8 +91,8 @@
 <p>- Identify which parts of the code requires refactoring to comply with the new architecture; refactor.</p>
 </td></tr>
 <tr>
-<td>June 18 - June 27</td>
-<td class='paragraph_td'>
+<td class='important'>June 18 - June 27</td>
+<td class='paragraph_td important'>
 <p>- Mid-term evaluations.</p>
 </td></tr>
 <tr>
@@ -106,13 +117,14 @@
 <p>- scrub code, write tests, improve documentation, etc.</p>
 </td></tr>
 <tr>
-<td>August 22 - August 23</td>
-<td class='paragraph_td'>
-<p>- submitting required code samples to Google. </p>
+<td class='important'>August 22 - August 23</td>
+<td class='paragraph_td important'>
+<p>- submit required code samples to Google. </p>
 </td></tr>
 </table>
 </div>
 
+<div class='dividor'></div>
 
 <h2>About Me</h2>
 <p>I am studying for my Master Degree in Peking University, where I am majoring in Search Engine &amp; Web Mining. In this term, I am also trying to build a search engine with C++. You can fetch the newest version of my code from <a href='https://github.com/Da-Huang/Search-Engine'>https://github.com/Da-Huang/Search-Engine</a>.</p>
@@ -132,6 +144,9 @@ td,th {
 	padding-left:10px;
 	padding-right:10px;
 }
+div.dividor {
+	border:1px solid gray;
+}
 div.tag {
 	text-align:center;
 	font-weight:bold;
@@ -142,12 +157,18 @@ td>p {
 td.paragraph_td {
 	text-align:left;
 }
-div.figure_div {
+td.important,th.important {
+	background-color:#ffffcc;
+}
+div.table_div {
 	display:table;
+	margin-top:20px;
 }
 p.sub1 {
 	text-indent:2em;
 	margin:5px;
 }
-
+table {
+	margin-bottom:10px;
+}
 </style>
