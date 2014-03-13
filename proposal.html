@@ -50,8 +50,9 @@ Beforing getting down to the optimation, I would like analyze the two Scorers fi
 </table>
 </div>
 <p>Table 1 illustrates some important natures of BooleanScorer and BooleanScorer2 on the current lucene trunk. The great difference between these two Scorer is due to their different ideas on implementation:</p>
-<p class=sub1>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query</p>
-<p class=sub1>2) BooleanScorer2 is implemented in a much more normal way.</p>
+<p class=sub1>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query faster, but leave the docIDs out of order as result. Thus, BooleanScorer can <b>only</b> be as Top Scorer.</p>
+<p class=sub1>2) BooleanScorer2 is implemented in a much more "tranditional" way. That is merging the Disjunction Query with a heap.</p>
+
 <h3>Make BooleanScorer Support MUST Clause</h3>
 
 <h3>Improve the Rule to Choose Scorer</h3>
@@ -62,7 +63,7 @@ Beforing getting down to the optimation, I would like analyze the two Scorers fi
 
 
 <h2>Schedule</h2>
-<p> My schedule is showed on Table 2.</p>
+<p> My schedule is showed on Table 2. Being a student, I will have three exams at the end of this semester (June-July). It will take me some time, but I promise everything will follow the schedule.</p>
 <div class='table_div'>
 <div class='tag'>Table 2.&nbsp;&nbsp;Project Schedule</div>
 <table border='1' style='text-align:center;'>
@@ -127,7 +128,7 @@ Beforing getting down to the optimation, I would like analyze the two Scorers fi
 <div class='dividor'></div>
 
 <h2>About Me</h2>
-<p>I am studying for my Master Degree in Peking University, where I am majoring in Search Engine &amp; Web Mining. In this term, I am also trying to build a search engine with C++. You can fetch the newest version of my code from <a href='https://github.com/Da-Huang/Search-Engine'>https://github.com/Da-Huang/Search-Engine</a>.</p>
+<p>I am studying for my Master Degree in Peking University, where I am majoring in Search Engine &amp; Web Mining. In this semester, I am also trying to build a search engine with C++. You can fetch the newest version of my code from <a href='https://github.com/Da-Huang/Search-Engine'>https://github.com/Da-Huang/Search-Engine</a>.</p>
 
 <p>You can know more about me on <a href=http://www.linkedin.com/profile/view?id=308789048 target='_blank'>http://www.linkedin.com/profile/view?id=308789048</a>.</p>
 
