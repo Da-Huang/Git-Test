@@ -1,9 +1,16 @@
+<p>Proposal Title: BooleanScorer should sometimes be used for MUST clauses in Lucene</p>
+<p>Student Name: Da Huang</p>
+<p>Student E-mail: dhuang.cn@gmail.com</p>
+<p>Student Mobile: +8613718862905</p>
+<p>Organization/Project: The Apache Software Foundation (ASF)
+Assigned Mentor:</p>
+
 
 <h2>Project Background</h2>
 <h3>BooleanScorer vs. BooleanScorer2</h3>
-<div style='display:table'>
-<div class='tag'> <!--style='text-align:center'--><strong>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2</strong></div>
-<table border='1' align='center'>
+<div class='figure_div'>
+<div class='tag'><strong>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</strong></div>
+<table border='1'>
 <tr><th>Scorer Name</th>
 <th>Scope Limit</th>
 <th>Disjunction</th>
@@ -17,16 +24,97 @@
 </tr>
 </table>
 </div>
-<p>Table 1 illustrates some important natures with BooleanScorer and BooleanScorer2.
+<p>Table 1 illustrates some important natures with BooleanScorer and BooleanScorer2 on current lucene trunk. 
 </p>
+
+
+<h2>Schedule</h2>
+<div class='figure_div'>
+<div class='tag'>Table 2.&nbsp;&nbsp;</div>
+<table border='1' style='text-align:center;'>
+<tr><th>Date</th><th>Tasks</th></tr>
+<tr>
+<td>April 22 - May 16</td>
+<td class='paragraph_td'>
+<p>- Get to know the code and the community.</p>
+<p>- Discuss with the mentor about some details on the code.</p>
+<p>- Check the plan to go right.</p>
+</td></tr>
+<tr>
+<td>May 19 - May 24</td>
+<td class='paragraph_td'>
+<p>- Analyze the requirements of a general BOW ranking framework.</p>
+</td></tr>
+<tr>
+<td>May 25 - May 31</td>
+<td class='paragraph_td'>
+<p>- Verify if all data is available in the Lucene index. Add what is missing.</p>
+</td></tr>
+<tr>
+<td>June 1 - June 20</td>
+<td class='paragraph_td'>
+<p>- Define and implement the new scoring class hierarchy.</p>
+<p>- Identify which parts of the code requires refactoring to comply with the new architecture; refactor.</p>
+</td></tr>
+<tr>
+<td>June 18 - June 27</td>
+<td class='paragraph_td'>
+<p>- Mid-term evaluations.</p>
+</td></tr>
+<tr>
+<td>June 28 - July 19</td>
+<td class='paragraph_td'>
+<p>- Convert the Lucene VSM ranking algorithm to the new architecture.</p>
+<p>- Test the new VSM implementation and validate it against the old one.</p>
+</td></tr>
+<tr>
+<td>July 20 - July 31</td>
+<td class='paragraph_td'>
+<p>- Implement the configuration interface.</p>
+</td></tr>
+<tr>
+<td>August 1 - August 10</td>
+<td class='paragraph_td'>
+<p>- Implement and test the BM25, BM25F and DFR ranking schemes.</p>
+</td></tr>
+<tr>
+<td>August 16 - August 21</td>
+<td class='paragraph_td'>
+<p>- scrub code, write tests, improve documentation, etc.</p>
+</td></tr>
+<tr>
+<td>August 22 - August 23</td>
+<td class='paragraph_td'>
+<p>- submitting required code samples to Google. </p>
+</td></tr>
+
+</table>
+</div>
+
 
 
 <!-- CSS -->
 <style type='text/css'>
+* {
+	font-family:monospace;
+}
 td,th {
 	text-align:center;
-};
-.tag {
+	padding-left:20px;
+	padding-right:20px;
+}
+div.tag {
 	text-align:center;
-};
+	font-weight:bold;
+}
+td>p {
+	margin:5px;
+}
+td.paragraph_td {
+	text-align:left;
+}
+div.figure_div {
+	display:table;
+}
+
 </style>
