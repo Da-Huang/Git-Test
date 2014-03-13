@@ -3,29 +3,29 @@
 <p>Student E-mail: dhuang.cn@gmail.com</p>
 <p>Student Mobile: +8613718862905</p>
 <p>Organization/Project: The Apache Software Foundation (ASF)
-Assigned Mentor:</p>
+<p>Assigned Mentor:</p>
 
 
 <h2>Project Background</h2>
+<p>Boolean Query is one of the most important types of query in an Information Retrieval System. Lucene has done several optimizations for that. The kernel modular to implement Boolean Query in lucene is Scorer, which can not only score a document, but also provide methods for collecting Hit Documents. There are mainly two Scorers to deal with Boolean Query on current trunk.</p>
 <h3>BooleanScorer vs. BooleanScorer2</h3>
 <div class='figure_div'>
-<div class='tag'><strong>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</strong></div>
+<div class='tag'>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</div>
 <table border='1'>
 <tr><th>Scorer Name</th>
-<th>Scope Limit</th>
-<th>Disjunction</th>
-<th>Conjunction</th>
+<th>Usability</th><th>Disjunction Query</th><th>Conjunction Query</th>
 </tr>
 <tr><th>BooleanScorer</th>
-<td>TopScorer</td><td>Faster</td><td>Slower</td>
+<td>As Top Scorer Only</td><td>Faster</td><td>Slower</td>
 </tr>
 <tr><th>BooleanScorer2</th>
-<td>No Limit</td><td>Slower</td><td>Faster</td>
+<td>No Level Limitation</td><td>Slower</td><td>Faster</td>
 </tr>
 </table>
 </div>
-<p>Table 1 illustrates some important natures with BooleanScorer and BooleanScorer2 on current lucene trunk. 
+<p>Table 1 illustrates some important natures of BooleanScorer and BooleanScorer2 on the current lucene trunk. The great difference between these two Scorer is due to their different ideas on implementation:
 </p>
+<p class=sub1>1) BooleanScorer is implemented by using an array to score windows of 2K. </p>
 
 
 <h2>Schedule</h2>
@@ -97,11 +97,13 @@ Assigned Mentor:</p>
 <style type='text/css'>
 * {
 	font-family:monospace;
+    text-align:justify;  
+	text-justify:distribute-all-lines;
 }
 td,th {
 	text-align:center;
-	padding-left:20px;
-	padding-right:20px;
+	padding-left:10px;
+	padding-right:10px;
 }
 div.tag {
 	text-align:center;
@@ -115,6 +117,9 @@ td.paragraph_td {
 }
 div.figure_div {
 	display:table;
+}
+p.sub1 {
+	text-indent:2em;
 }
 
 </style>
