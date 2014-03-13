@@ -6,20 +6,44 @@
 <p>Assigned Mentor:</p>
 
 
-<h2>Project Background</h2>
-<p>Boolean Query is one of the most important types of query in an Information Retrieval System. Lucene has done several optimizations for that. The kernel modular to implement Boolean Query in lucene is Scorer, which can not only score a document, but also provide methods for collecting Hit Documents. There are mainly two Scorers to deal with Boolean Query on current trunk.</p>
+<h2>Proposal Abstract</h2>
+<p>Boolean Query is one of the most important types of query in an Information Retrieval System. Lucene has done several optimizations for that. The kernel modular to implement Boolean Query in lucene is <b>Scorer</b>, which can not only score a document, but also provide methods for collecting Hit Documents. There are mainly two Scorers, <b>BooleanScorer</b> and <b>BooleanScorer2</b> (Their natures can be found in <a href='#table1'>Table 1</a>), to deal with Boolean Query on current trunk. The class BooleanQuery would choose one of them as the scorer returning to the its caller.</p>
+<p>Today lucene <b>only</b> uses BooleanScorer if the query consists of <I>SHOULD</I> and <I>MUST_NOT</I>. If there is one or more <I>MUST</I> clauses lucene always uses BooleanScorer2. But such way to make the choice is too easy and naive. What I would like to do in this project is to develop a more clever way for BooleanQuery to choose which Scorer to be uses.</p>
+<p>However, the development would be not be so easy, some Scorers have to be improved to fit the new way.</p>
+<p>The project shall deliver four components as follows:</p>
+<p class=sub1>1) Making the BooleanScorer resupport <I>MUST</I> clause.</p>
+<p class=sub1>2) Developing a better rule for BooleanQuery to choose Scorer.</p>
+<p class=sub1>3) Implement.</p>
+<p class=sub1>4) .</p>
+<p>Javadoc and wiki documentation shall be written for new and altered components.</p>
+
+<h3>List of Deliverables</h3>
+<p class=sub1>1) Patches of improving code.</p>
+<p class=sub1>2) Report on the result.</p>
+<p class=sub1>3) Updated document.</p>
+
+<h3>Quantifiable Results for the Apache Community</h3>
+<p class=sub1>1) Faster BooleanQuery for Lucene.</p>
+<p class=sub1>2) .</p>
+<p class=sub1>3) .</p>
+<p class=sub1>4) .</p>
+
+
+<h2>Proposal Details</h2>
+
 <h3>BooleanScorer vs. BooleanScorer2</h3>
 <div class='figure_div'>
-<div class='tag'>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</div>
+<div id='table1' class='tag'>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</div>
 <table border='1'>
 <tr><th>Scorer Name</th>
 <th>Usability</th><th>Disjunction Query</th><th>Conjunction Query</th>
+<th>MUST Clause</th>
 </tr>
 <tr><th>BooleanScorer</th>
-<td>As Top Scorer Only</td><td>Faster</td><td>Slower</td>
+<td>As Top Scorer Only</td><td>Faster</td><td>Slower</td><td>Used to, Not Now</td>
 </tr>
 <tr><th>BooleanScorer2</th>
-<td>No Level Limitation</td><td>Slower</td><td>Faster</td>
+<td>No Level Limitation</td><td>Slower</td><td>Faster</td><td>Yes</td>
 </tr>
 </table>
 </div>
@@ -27,10 +51,12 @@
 </p>
 <p class=sub1>1) BooleanScorer is implemented by using an array to score windows of 2K. </p>
 
+<h2>Related Work</h2>
 
 <h2>Schedule</h2>
+<p> My schedule is showed on Table 2.</p>
 <div class='figure_div'>
-<div class='tag'>Table 2.&nbsp;&nbsp;</div>
+<div class='tag'>Table 2.&nbsp;&nbsp;Schedule</div>
 <table border='1' style='text-align:center;'>
 <tr><th>Date</th><th>Tasks</th></tr>
 <tr>
@@ -92,6 +118,8 @@
 </div>
 
 
+<h2>About Me</h2>
+
 
 <!-- CSS -->
 <style type='text/css'>
@@ -120,6 +148,7 @@ div.figure_div {
 }
 p.sub1 {
 	text-indent:2em;
+	margin:5px;
 }
 
 </style>
