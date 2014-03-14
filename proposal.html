@@ -1,3 +1,8 @@
+<h1>LUCENE-4396: BooleanScorer should sometimes be used for MUST clauses</h1>
+<p>Today Lucene only uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But it is suspected that unless the MUST clauses have very low hit count compared to the other clauses, that BooleanScorer would perform better than BooleanScorer2. The most challenging part might be the heuristics on when to use which.</p>
+<div class='dividor'></div>
+
+
 <p>Proposal Title: BooleanScorer should sometimes be used for MUST clauses in Lucene</p>
 <div class='dividor'></div>
 <p>Student Name: Da Huang</p>
@@ -95,11 +100,20 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 <p>Codes should be specified for the situation where there is no MUST clause in BooleanQuery.</p>
 </div>
 
-<h3>Improve the Rule to Choose Scorer</h3>
-<p>My intuitive idea is that</p>
-<h4>1) Basic setup.</h4>
-<h4>2) Get the threshold by testing.</h4>
-
+<h3>Improve the Rule for Choosing Scorer</h3>
+<p>Relevant codes to improve is around line #342 in BooleanQuery.java. What to do is just adjusting the condition on returning BooleanScorer.</p>
+<p>It seems that, in most situations, the improved BooleanScorer performs better than BooleanScorer2. If that is true, just clear the condition of required.size() and minNrShouldMatch.</p>
+<p>However, I would like to figure out a more accurate rule. To do this, the code would be as follows:</p>
+<div id='code2' class='code'><code><ol>
+<li>cScorer = <b>new</b> ConjunctionScorer(this, required);</li>
+<li><b>if</b> !scoreDocsInOrder <b>and</b> topScorer <b>then</b></li>
+<li><div style='margin-left:2em'><b>if</b> cScorer.cost() &lt; ?x <b>and</b> minNrShouldMatch &lt; ?y <b>then</b></div></li>
+<li><div style='margin-left:4em'><b>return new</b> BooleanScorer(cScorer, required, optional, prohibited);</div></li>
+<li><div style='margin-left:2em'><b>endif</b></div></li>
+<li><b>endif</b></li>
+</ol></code></div>
+</div>
+<p>By testing the benchmarks with different ?x and ?y, I can find a better rule for choosing suitable scoreer.</p>
 
 <!--<h3>Improve .rewrite() in BooleanQuery</h3>
 As Only Top Scorer.-->
@@ -114,59 +128,66 @@ As Only Top Scorer.-->
 <table border='1' style='text-align:center;'>
 <tr><th>Timeline</th><th>Tasks</th></tr>
 <tr>
-<td>April 22 - May 16</td>
+<td>April 21 - May 16</td>
 <td class='paragraph_td'>
 <p>- Get to know more about the code.</p>
-<p>- Discuss with the mentor about some details on the code.</p>
+<p>- Discuss with the mentor about some confusing details on the code.</p>
 <p>- Get familiar with testing on benchmarks.</p>
 </td></tr>
 <tr>
-<td>May 19 - May 24</td>
+<td>May 17 - May 23</td>
 <td class='paragraph_td'>
-<p>- Implements the BooleanScorer simple.</p>
-<p>- Add to check test.</p>
+<p>- Make the BooleanScorer support MUST clause without .advance() optimation.</p>
+<p>- Adjust the BooleanQuery to let BooleanScorer be applied even when it comes to MUST clause.</p>
+<p>- Test on benchmarks to see the performance changes.</p>
 </td></tr>
 <tr>
-<td>May 25 - May 31</td>
+<td>May 24 - May 31</td>
 <td class='paragraph_td'>
-<p>- Verify if all data is available in the Lucene index. Add what is missing.</p>
+<p>- Implement BooleanScorer with .advance() optimation.</p>
+<p>- Test on benchmarks to see the performance changes.</p>
 </td></tr>
 <tr>
-<td>June 1 - June 20</td>
+<td>June 1 - June 22</td>
 <td class='paragraph_td'>
-<p>- Define and implement the new scoring class hierarchy.</p>
-<p>- Identify which parts of the code requires refactoring to comply with the new architecture; refactor.</p>
+<p>- Check the tests.</p>
+<p>- File mid-term evaluations.</p>
 </td></tr>
 <tr>
-<td class='important'>June 18 - June 27</td>
+<td class='important'>June 23 - June 25</td>
 <td class='paragraph_td important'>
-<p>- Mid-term evaluations.</p>
+<p>- Submit mid-term evaluations.</p>
 </td></tr>
 <tr>
-<td>June 28 - July 19</td>
+<td>June 26 - July 19</td>
 <td class='paragraph_td'>
-<p>- Convert the Lucene VSM ranking algorithm to the new architecture.</p>
-<p>- Test the new VSM implementation and validate it against the old one.</p>
+<p>- With the <a href='#code2'>code above</a>, do tests on banchmarks with different arguments.</p>
+<p>- Analyze the test result and figure out the best arguments.</p>
 </td></tr>
 <tr>
 <td>July 20 - July 31</td>
 <td class='paragraph_td'>
-<p>- Implement the configuration interface.</p>
+<p>- File the test report.</p>
 </td></tr>
 <tr>
 <td>August 1 - August 10</td>
 <td class='paragraph_td'>
-<p>- Implement and test the BM25, BM25F and DFR ranking schemes.</p>
+<p>- Do final tests and check the code..</p>
 </td></tr>
 <tr>
-<td>August 16 - August 21</td>
+<td>August 11 - August 17</td>
 <td class='paragraph_td'>
-<p>- scrub code, write tests, improve documentation, etc.</p>
+<p>- Scrub code, write tests, improve documentation, etc.</p>
+</td></tr>
+<tr>
+<td class='important'>August 18 - August 20</td>
+<td class='paragraph_td important'>
+<p>- Submit final evaluations.</p>
 </td></tr>
 <tr>
 <td class='important'>August 22 - August 23</td>
 <td class='paragraph_td important'>
-<p>- submit required code samples to Google. </p>
+<p>- Submit required code samples to Google. </p>
 </td></tr>
 </table>
 </div>
