@@ -70,8 +70,10 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 
 <h4>2) How to collect documents in the method .score()?</h4>
 <div class='h4_content'>
-<p>In order to collect documents efficiently, docs collected by the ConjunctionScorer should be linked up in the bucket table firstly. After that, the linked list in the bucket table would be a list of docs which satisfy all MUST clauses. </p>
-, and then docs can be found by the .
+<p>In order to collect documents efficiently, docs collected by the ConjunctionScorer should be linked up in the bucket table firstly. After that, the linked list in the bucket table would be a list of docs which satisfy all MUST clauses. <b>ATTENTION</b>: <u>docs' id in the linked list should be in ascending order.</u></p>
+<p>Then, by scanning the linked list, subScorers can check the docID and either set its MUST_NOT bit or add one SHOULD hit count to it. In this step, subScorers' .advance() method should be used to skip a lot of docIDs.</p>
+<p>At last, a bucket collector can collect all target docs, by scanning the linked list.</p>
+<p>A sketch on how to implement procedures above, is as follows:</p>
 <div class='code'><code><ol>
 <li><b>for each</b> window <b>do</b></li>
 <li><div style='margin-left:2em'>Collect docs within the window range to make a linked list on bucket table with ConjunctionScorer;</div></li>
@@ -88,13 +90,15 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 </ol></code></div>
 </div>
 
-<h4>3) Anything to be careful?</h4>
+<h4>3) Anything else to be careful?</h4>
 <div class='h4_content'>
-<p>There are some specific situations.</p>
+<p>Codes should be specified for the situation where there is no MUST clause in BooleanQuery.</p>
 </div>
 
 <h3>Improve the Rule to Choose Scorer</h3>
-<h4>1) Basic Setup.</h4>
+<p>My intuitive idea is that</p>
+<h4>1) Basic setup.</h4>
+<h4>2) Get the threshold by testing.</h4>
 
 
 <!--<h3>Improve .rewrite() in BooleanQuery</h3>
@@ -114,12 +118,13 @@ As Only Top Scorer.-->
 <td class='paragraph_td'>
 <p>- Get to know more about the code.</p>
 <p>- Discuss with the mentor about some details on the code.</p>
-<p>- Fix bugs on the original plan.</p>
+<p>- Get familiar with testing on benchmarks.</p>
 </td></tr>
 <tr>
 <td>May 19 - May 24</td>
 <td class='paragraph_td'>
-<p>- Analyze .</p>
+<p>- Implements the BooleanScorer simple.</p>
+<p>- Add to check test.</p>
 </td></tr>
 <tr>
 <td>May 25 - May 31</td>
