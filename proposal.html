@@ -70,25 +70,31 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 
 <h4>2) How to collect documents in the method .score()?</h4>
 <div class='h4_content'>
-<p>That would be something like that.</p>
+<p>In order to collect documents efficiently, docs collected by the ConjunctionScorer should be linked up in the bucket table firstly. After that, the linked list in the bucket table would be a list of docs which satisfy all MUST clauses. </p>
+, and then docs can be found by the .
 <div class='code'><code><ol>
 <li><b>for each</b> window <b>do</b></li>
-<li><div style='margin-left:2em'>collect docs within the window range to make a linked list on bucket table with ConjunctionScorer;</div></li>
-<li><div style='margin-left:2em'>currentDocID = bucketTable.firstDocID;<div></li>
+<li><div style='margin-left:2em'>Collect docs within the window range to make a linked list on bucket table with ConjunctionScorer;</div></li>
+<li><div style='margin-left:2em'>currentDocID = bucketTable.firstDocID;</div></li>
 <li><div style='margin-left:2em'><b>for each</b> subScorer <b>do</b></div></li>
 <li><div style='margin-left:4em'>subScorer.advance(currentDocID)</div></li>
-<li><div style='margin-left:2em'><b>endfor</b><div></li>
+<li><div style='margin-left:4em'><b>if</b> subScorer.docID() == currentDocID <b>then</b></div></li>
+<li><div style='margin-left:6em'>To set MUST_NOT bit or add SHOULD hit count according to subScorer's type;</div></li>
+<li><div style='margin-left:4em'><b>endif</b></div></li>
+<li><div style='margin-left:2em'><b>endfor</b></div></li>
+<li><div style='margin-left:2em'>currentDocID = next(currentDocID);</div></li>
+<li><div style='margin-left:2em'>Scan the linked list to collect target docs;</div></li>
 <li><b>endfor</b></li>
 </ol></code></div>
-<p></p>
 </div>
 
 <h4>3) Anything to be careful?</h4>
 <div class='h4_content'>
-<p>There are some specified situations.</p>
+<p>There are some specific situations.</p>
 </div>
 
 <h3>Improve the Rule to Choose Scorer</h3>
+<h4>1) Basic Setup.</h4>
 
 
 <!--<h3>Improve .rewrite() in BooleanQuery</h3>
@@ -229,5 +235,8 @@ div.code {
 }
 div.h4_content>div.code {
 	margin-left:2em;
+}
+code>ol {
+	margin:0;
 }
 </style>
