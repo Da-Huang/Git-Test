@@ -17,11 +17,11 @@
 <div class='dividor'></div>
 
 <h2>Project Goals</h2>
-<p>The project shall deliver four components as follows:</p>
+<p>The project shall deliver three components as follows:</p>
 <p class=sub1>1) BooleanScorer which supports MUST clause friendly i.e. <b>.advance()</b> should be used trickly to skip docs.</p>
 <p class=sub1>2) A better rule for BooleanQuery to choose Scorer.</p>
-<p class=sub1>3) A better <b>.rewrite()</b> method in BooleanQuery.</p>
-<p class=sub1>4) Revelant Javadocs and reports.</p>
+<!--<p class=sub1>3) A better <b>.rewrite()</b> method in BooleanQuery.</p>-->
+<p class=sub1>3) Revelant Javadocs and reports.</p>
 
 <div class='dividor'></div>
 
@@ -52,16 +52,25 @@ Beforing getting down to the optimation, I would like analyze the two Scorers fi
 <p>Table 1 illustrates some important natures of BooleanScorer and BooleanScorer2 on the current lucene trunk. The great difference between these two Scorer is due to their different ideas on implementation:</p>
 <p class=sub1>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query faster, but leave the docIDs out of order as result. Thus, BooleanScorer can <b>only</b> be as Top Scorer.</p>
 <p class=sub1>2) BooleanScorer2 is implemented in a much more "tranditional" way. That is merging the Disjunction Query with a heap.</p>
-<p>In a conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm makes the BooleanScorer can <b>only</b> be as Top Scorer and less efficient to excute Conjunction Query.</p>
+<p>In a conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm makes the BooleanScorer can <b>only</b> be as Top Scorer and unsuitable for Conjunction Query.</p>
+<p>As for the Top Scorer only problem, it is not a severe one, because most BooleanQuery does not have deep levels, and the costest Scorer is the Top Scorer. Thus, I prepare to solve the MUST clause.</p>
 
 <h3>Make BooleanScorer Support MUST Clause</h3>
-Although used to support MUST clause, BooleanScorer is not friend with MUST clause in the last version that it support that. The most intuitive way to do this is to deal with bucket table.
+In order to implement this function, the following problem should be solved:
+<h4>1) How many MUST clause should BooleanScorer support?</h4>
+<div class='h4_content'>
+<p>Actually, </p>
+</div>
+<h4>2) How to collect documents in the method .score()?</h4>
+<div class='h4_content'>
+<p></p>
+</div>
 
 <h3>Improve the Rule to Choose Scorer</h3>
 
 
-<h3>Improve .rewrite() in BooleanQuery</h3>
-As Only Top Scorer.
+<!--<h3>Improve .rewrite() in BooleanQuery</h3>
+As Only Top Scorer.-->
 
 <div class='dividor'></div>
 
@@ -151,6 +160,8 @@ td,th {
 }
 div.dividor {
 	border:1px solid gray;
+	margin-top:20px;
+	margin-bottom:20px;
 }
 div.tag {
 	text-align:center;
@@ -172,6 +183,15 @@ div.table_div {
 p.sub1 {
 	text-indent:2em;
 	margin:5px;
+}
+h4 {
+	text-indent:2em;
+	margin-bottom:0;
+}
+div.h4_content>p {
+	margin:5px;
+	margin-left:2em;
+	text-indent:2em;
 }
 table {
 	margin-bottom:10px;
