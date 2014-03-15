@@ -1,25 +1,25 @@
 <h1>LUCENE-4396: BooleanScorer should sometimes be used for MUST clauses</h1>
 <p>Today Lucene only uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But it is suspected that unless the MUST clauses have very low hit count compared to the other clauses, that BooleanScorer would perform better than BooleanScorer2. The most challenging part might be the heuristics on when to use which.</p>
-<div class='dividor' style='border-bottom:2px solid gray;margin-bottom:20px;'></div>
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <body style='font-family:monospace;text-align:justify;text-justify:distribute-all-lines;'>
 <p>Proposal Title: BooleanScorer should sometimes be used for MUST clauses in Lucene</p>
-<div class='dividor' style='border-bottom:2px solid gray;margin-bottom:20px;'></div>
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 <p>Student Name: Da Huang</p>
 <p>Student E-mail: dhuang.cn@gmail.com</p>
 <p>Student Mobile: +8613718862905</p>
-<div class='dividor' style='border-bottom:2px solid gray;margin-bottom:20px;'></div>
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 <p>Organization/Project: The Apache Software Foundation (ASF)
 <p>Assigned Mentor: Michael McCandless</p>
 
-<div class='dividor' style='border-bottom:2px solid gray;margin-bottom:20px;'></div>
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Introduction to the Project</h2>
 <p>Boolean Query is one of the most important types of query in an Information Retrieval System. Lucene has done several optimizations for that. The kernel modular to implement Boolean Query in lucene is <b>Scorer</b>, which can not only score a document, but also provide methods for collecting Hit Documents. There are mainly two Scorers, <b>BooleanScorer</b> and <b>BooleanScorer2</b> (Their natures can be found in <a href='#table1'>Table 1</a>), to deal with Boolean Query on current trunk. The class BooleanQuery would choose one of them as the scorer returning to the its caller.</p>
 <p>Today lucene <b>only</b> uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But such way to make the choice is too easy and naive. What I would like to do in this project is to develop a more clever way for BooleanQuery to choose which Scorer to be uses.</p>
 <p>The key to implementing the project is to make <b>BooleanScorer</b> support MUST clause, and then check the influence of MUST clause on BooleanScorer's speed by testing.</p>
 
-<div class='dividor' style='border-bottom:2px solid gray;margin-bottom:20px;'></div>
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Project Goals</h2>
 <p>The project shall deliver three components as follows:</p>
@@ -27,13 +27,13 @@
 <p class='sub1' style='text-indent:2em;margin:5px'>2) A better rule for BooleanQuery to choose Scorer.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>3) Revelant Javadocs and reports.</p>
 
-<div class='dividor' style='border-bottom:2px solid gray;margin-bottom:20px;'></div>
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Quantifiable Results for the Apache Community</h2>
 <p class='sub1' style='text-indent:2em;margin:5px'>1) Faster BooleanQuery for lucene.</p>
 <!--<p class='sub1' style='text-indent:2em;margin:5px'>2) More powerful and efficient BooleanScorer which supports .</p>
 -->
-<div class='dividor' style='border-bottom:2px solid gray;margin-bottom:20px;'></div>
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Project Details</h2>
 <h3>BooleanScorer vs. BooleanScorer2</h3>
@@ -117,81 +117,81 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 <!--<h3>Improve .rewrite() in BooleanQuery</h3>
 As Only Top Scorer.-->
 
-<div class='dividor' style='border-bottom:2px solid gray;margin-bottom:20px;'></div>
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 
 <h2>Schedule</h2>
-<p> My schedule is showed on Table 2. Being a student, I will have three exams at the end of this semester (June-July). It will take me some time, but I promise everything will follow the schedule.</p>
+<p> My schedule is showed on Table 2. Being a student, I will have three exams at the end of this semester (June). It will take me some time, but I promise everything will follow the schedule.</p>
 <div class='table_div' style='display:table'>
 <div class='tag' style='text-align:center;font-weight:bold;'>Table 2.&nbsp;&nbsp;Project Schedule</div>
 <table style='border:1px solid'>
 <tr><th style='border:1px solid;'>Timeline</th><th style='border:1px solid;'>Tasks</th></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>April 21 - May 16</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>April 21 - May 16</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px;' class='paragraph_td'>
 <p>- Get to know more about the code.</p>
 <p>- Discuss with the mentor about some confusing details on the code.</p>
 <p>- Get familiar with testing on benchmarks.</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>May 17 - May 23</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>May 17 - May 23</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
 <p>- Make the BooleanScorer support MUST clause without .advance() optimation.</p>
 <p>- Adjust the BooleanQuery to let BooleanScorer be applied even when it comes to MUST clause.</p>
 <p>- Test on benchmarks to see the performance changes.</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>May 24 - May 31</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>May 24 - May 31</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
 <p>- Implement BooleanScorer with .advance() optimation.</p>
 <p>- Test on benchmarks to see the performance changes.</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>June 1 - June 22</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>June 1 - June 22</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
 <p>- Check the tests.</p>
 <p>- File mid-term evaluations.</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px' class='important'>June 23 - June 25</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px' class='important'>June 23 - June 25</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td important'>
 <p>- Submit mid-term evaluations.</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>June 26 - July 19</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>June 26 - July 19</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
 <p>- With the <a href='#code2'>code above</a>, do tests on banchmarks with different arguments.</p>
 <p>- Analyze the test result and figure out the best arguments.</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>July 20 - July 31</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>July 20 - July 31</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
 <p>- File the test report.</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>August 1 - August 10</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>August 1 - August 10</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
 <p>- Do final tests and check the code..</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>August 11 - August 17</td>
-<td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>August 11 - August 17</td>
+<td style='border:1px solid;vertical-align:middle;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
 <p>- Scrub code, write tests, improve documentation, etc.</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px' class='important'>August 18 - August 20</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px' class='important'>August 18 - August 20</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td important'>
 <p>- Submit final evaluations.</p>
 </td></tr>
 <tr>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px' class='important'>August 22 - August 23</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px' class='important'>August 22 - August 23</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td important'>
 <p>- Submit required code samples to Google. </p>
 </td></tr>
 </table>
 </div>
 
-<div class='dividor' style='border-bottom:2px solid;margin-bottom:20px;'></div>
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>About Me</h2>
 <p>I am studying for my Master Degree in Peking University, where I am majoring in Search Engine &amp; Web Mining. In this semester, I am also trying to build a search engine with C++. You can fetch the newest version of my code from <a href='https://github.com/Da-Huang/Search-Engine' target='_blank'>https://github.com/Da-Huang/Search-Engine</a>.</p>
