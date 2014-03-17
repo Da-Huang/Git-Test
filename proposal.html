@@ -23,8 +23,8 @@
 
 <h2>Project Goals</h2>
 <p>The project shall deliver four components as follows:</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>1) BooleanScorer which supports MUST clauses friendly.</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>2) A mechanism which makes BooleanScorer can act as sub-scorer in the case where at least one MUST clause is present.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>1) A mechanism which makes BooleanScorer support MUST clauses friendly ie. skipping the posting list trickly.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>2) A more complete BooleanScorer which can act as sub-scorer in the case where at least one MUST clause is present.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>3) A better rule for BooleanQuery to choose Scorer.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>4) Revelant Javadocs and reports.</p>
 
@@ -58,12 +58,12 @@ Beforing getting down to the optimation, I would like analyze the two Scorers fi
 <p class='sub1' style='text-indent:2em;margin:5px'>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query faster, but leave the docIDs out of order as result. Thus, BooleanScorer can <b>only</b> act as Top Scorer.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>2) BooleanScorer2 is implemented in a much more "tranditional" way. That is merging the Disjunction Query with a heap.</p>
 <p>In a conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm makes the BooleanScorer can <b>only</b> act as Top Scorer and unsuitable for queries with MUST clauses.</p>
-<p>In this project, I would focus on solving the MUST clauses problem first. Then, it can be found that, with the method used to solve the first problem, the Top Scorer only problem can naturally be solved in the case where at least one MUST clause is present.</p>
+<p>In this project, I would focus on solving the MUST clauses problem first. Then, it could be found that, with the method used to solve the first problem, the Top Scorer only problem can naturally be solved in the case where at least one MUST clause is present.</p>
 
 <!--<p>As for the Top Scorer only problem, it is not a severe one, because the top level of a boolean query is its main costly part. Further more, we can convert some costly parts of a boolean query to its top level, by rewriting it. Thus, I will pay most attention to solving the MUST clauses problem.</p>
 <p>However, it seems that Top Scorer only problem can be solved naturally, after MUST clauses is supported in BooleanScorer.</p>-->
 
-<h3>Make BooleanScorer Support MUST Clause</h3>
+<h3 id='part2'>Make BooleanScorer Support MUST Clause</h3>
 <p>In order to implement this function, the following problem should be figured out:</p>
 <h4>1) How to support MUST clauses in BooleanScorer?</h4>
 <div class='h4_content'>
@@ -106,7 +106,6 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 <li><b>endfor</b></li>
 </ol></code></div>
 </div>
-<p>It is amazing to find that those collected docIDs can keep ascending order with this method. It means that .advance(), .nextDoc() and other kernel methods for embedded scorer can be implemented. In a word, BooleanScorer can act as sub-scorer, if it has MUST clauses to deal with.</p>
 
 <h4>3) Anything else to be careful?</h4>
 <div class='h4_content'>
@@ -114,7 +113,19 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 </div>
 
 <h3>How can BooleanScorer act as Sub-Scorer</h3>
-If the last part 
+In <a href='#part2'>last part</a>, I have proposed a mechanism for BooleanScorer to support MUST clauses.</p>
+<p>It is amazing that, that mechanism can make those collected docIDs keep ascending order. It means that .advance(), .nextDoc() and other methods for embedded scorer can be now implemented naturally. In a word, BooleanScorer can act as sub-scorer, if it has MUST clauses to deal with.</p>
+<p>Some of the most important methods will be described in detail below.
+
+<h4>1) .advance(docID)?</h4>
+<div class='h4_content'>
+<p>The method .advance() is used to </p>
+</div>
+
+<h4>2) .nextDoc(docID)?</h4>
+<div class='h4_content'>
+<p>Codes should be specified for the situation where there is no MUST clause in BooleanQuery.</p>
+</div>
 
 
 <h3>Improve the Rule for Choosing Scorer</h3>
