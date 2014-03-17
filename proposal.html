@@ -15,7 +15,7 @@
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Introduction to the Project</h2>
-<p>Boolean Query is one of the most important types of query in an Information Retrieval System. Lucene has done several optimizations for that. The kernel modular to implement Boolean Query in lucene is <b>Scorer</b>, which can not only score a document, but also provide methods for collecting Hit Documents. There are mainly two Scorers, <b>BooleanScorer</b> and <b>BooleanScorer2</b> (Their natures can be found in <a href='#table1'>Table 1</a>), to deal with Boolean Query on current trunk. The class BooleanQuery would choose one of them as the scorer returning to the its caller.</p>
+<p><b>BooleanQuery</b> is one of the most important types of query in an Information Retrieval System. Lucene has done several optimizations for that. The kernel modular to implement BooleanQuery in lucene is <b>Scorer</b>, which can not only score a document, but also provide methods for collecting Hit Documents. There are mainly two Scorers, <b>BooleanScorer</b> and <b>BooleanScorer2</b> (Their natures can be found in <a href='#table1'>Table 1</a>), to deal with BooleanQuery on current trunk. The class BooleanQuery would choose one of them as the scorer returning to the its caller.</p>
 <p>Today lucene <b>only</b> uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But such way to make the choice is too easy and naive. What I would like to do in this project is to develop a more clever way for BooleanQuery to choose which Scorer to be uses.</p>
 <p>The key to implementing the project is to make <b>BooleanScorer</b> support MUST clause, and then check the influence of MUST clause on BooleanScorer's speed by testing.</p>
 
@@ -30,7 +30,7 @@
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Quantifiable Results for the Apache Community</h2>
-<p class='sub1' style='text-indent:2em;margin:5px'>1) Faster BooleanQuery for Apache Lucene.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>1) More efficient and powerful BooleanQuery for Apache Lucene.</p>
 <!--<p class='sub1' style='text-indent:2em;margin:5px'>2) More powerful and efficient BooleanScorer which supports .</p>
 -->
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
@@ -56,8 +56,9 @@ Beforing getting down to the optimation, I would like analyze the two Scorers fi
 <p>Table 1 illustrates some important natures of BooleanScorer and BooleanScorer2 on the current lucene trunk. The great difference between these two Scorer is due to their different ideas on implementation:</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query faster, but leave the docIDs out of order as result. Thus, BooleanScorer can <b>only</b> be as Top Scorer.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>2) BooleanScorer2 is implemented in a much more "tranditional" way. That is merging the Disjunction Query with a heap.</p>
-<p>In a conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm makes the BooleanScorer can <b>only</b> be as Top Scorer and unsuitable for Conjunction Query.</p>
+<p>In a conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm makes the BooleanScorer can <b>only</b> be as Top Scorer and unsuitable for queries with MUST clauses.</p>
 <p>As for the Top Scorer only problem, it is not a severe one, because the top level of a boolean query is its main costly part. Further more, we can convert some costly parts of a boolean query to its top level, by rewriting it. Thus, I will pay most attention to resolving the MUST clauses problem.</p>
+<p>However, it seems that Top Scorer only problim can be resolved naturally, after MUST clauses is supported in BooleanScorer.</p>
 
 <h3>Make BooleanScorer Support MUST Clause</h3>
 <p>In order to implement this function, the following problem should be solved:</p>
@@ -102,6 +103,7 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 <li><b>endfor</b></li>
 </ol></code></div>
 </div>
+<p>It is amazing to find that those collected docIDs can keep ascending order with this method. It means that .advance(), .nextDoc() and other kernel methods for embedded scorer can be implemented. In a word, BooleanScorer can be as Not-Top Scorer, if it has MUST clauses to deal with.</p>
 
 <h4>3) Anything else to be careful?</h4>
 <div class='h4_content'>
@@ -109,7 +111,7 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 </div>
 
 <h3>Improve the Rule for Choosing Scorer</h3>
-<p>Relevant codes to improve is in BooleanQuery.BooleanWeight.score(). What to do is just to adjust the condition on returning BooleanScorer.</p>
+<p>Relevant codes to improve is in BooleanQuery.BooleanWeight.score(). What to do is to adjust the condition on returning BooleanScorer.</p>
 <p>It seems that, in most situations, the improved BooleanScorer performs better than BooleanScorer2. If that is true, just clear the condition of required.size() and minNrShouldMatch.</p>
 <p>However, I would like to figure out a more accurate rule. To do this, the code would be as follows:</p>
 <div id='code2' class='code'><code style='border:1px dashed gray;padding:10px;border-radius:10px;margin-top:5px;margin-bottom:5px;background-color:#ecf5ff;display:table;'><ol>
