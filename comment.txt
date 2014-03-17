@@ -1,0 +1,186 @@
+Proposal Title: BooleanScorer should sometimes be used for MUST clauses in Lucene
+ 
+
+Student Name: Da Huang
+
+Student E-mail: dhuang.cn@gmail.com
+
+Student Mobile: +8613718862905
+ 
+
+Organization/Project: The Apache Software Foundation (ASF)
+
+Assigned Mentor:
+ 
+Introduction to the Project
+
+Boolean Query is one of the most important types of query in Information Retrieval System. Lucene has developed several optimizations for that. The kernel modular to implement Boolean Query in Lucene is Scorer, which provides the capability to: 1. Score documents via different Similarity implementations; 2. Collect hit documents via different Collector implementations. Currently there are two Scorers for Boolean Query: BooleanScorer and BooleanScorer2 (Their difference shown in Table 1). The class BooleanQuery would decide which one to choose.
+
+Today Lucene only uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses Lucene always uses BooleanScorer2. But such way to make the choice is too easy and naive. What I would like to do in this project is to develop a more clever way for BooleanQuery to choose which Scorer to be uses.
+
+The key to implementing the project is to make BooleanScorer support MUST clause, and then check the influence of MUST clause on BooleanScorer's speed by testing.
+ 
+Project Goals
+
+The project shall deliver three components as follows:
+
+1) BooleanScorer which supports MUST clause friendly i.e. .advance() should be used trickly to skip docs.
+
+2) A better rule for BooleanQuery to choose Scorer.
+
+3) Revelant Javadocs and test reports.
+ 
+Quantifiable Results for the Apache Community
+
+1) An ideally faster BooleanQuery for Lucene.
+
+2) Detailed performance test result
+
+ 
+ 
+Project Details
+BooleanScorer vs. BooleanScorer2
+
+Before getting down to the optimization, I would like explain my idea about current implementations.
+
+Table 1.  BooleanScorer vs. BooleanScorer2 on current Lucene trunk
+Scorer	Usability	Disjunction Query	Conjunction Query	MUST Clause
+BooleanScorer 	As Top Scorer Only 	Faster 	Not Supported Now 	Used to, Not Now
+BooleanScorer2 	No Level Limitation 	Slower 	Faster 	Yes
+
+Table 1 illustrates some important features of BooleanScorer and BooleanScorer2 on current Lucene trunk. The great difference between these two Scorer is due to their different ideas on implementation:
+
+1) BooleanScorer is implemented by using an array to score windows of 2K (COMMENT: what is 'windows of 2K?'). This makes Disjunction Query faster, but leaves the docIDs out of order as result. Thus, BooleanScorer can only be used as Top Scorer.
+
+2) BooleanScorer2 is implemented in a much more "tranditional" way: it merges the Disjunction Query with a heap, and the result docID list will be in order.
+
+In conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm set limitation of the use of BooleanScorer.
+
+[explain this sentence] As for the 'Top Scorer only' problem, it is not a severe one, because most BooleanQuery does not have deep levels, and the costest Scorer is the Top Scorer. Thus, I prepare to solve the MUST clause.
+
+Make BooleanScorer Support MUST Clause
+
+The following problem should be solved:
+
+1) How many MUST clause should BooleanScorer support?
+2) How to collect documents in the method .score()?
+
+As for the first problem: 
+
+Actually, the original design of BooleanScorer on latest trunk can only support up to 32 MUST clauses, if the macro 'MASK' isn't enlarged. Such design is not flexible enough, and may cost a lot on dealing with these clauses one by one. [why one by one? explain :)]
+
+My idea is to group up all MUST clauses so that it looks like there is just one MUST clause. For example:
+a +b c -d +e f <=> +(+b +e) a c f -d
+
+Apparently, the transition won't change the query semantic.
+
+However, when it comes to implementation, there is in fact no need to build a new BooleanClause for the MUST clauses in the query. The most natural way is to pass a new ConjunctionScorer to BooleanScorer, which represents all the MUST clauses in the query, and meanwhile, it looks like only one MUST clause.
+
+As for the second problem:
+
+In order to collect documents efficiently, docs collected by the ConjunctionScorer should be linked up in the bucket table first. After that, the linked list in the bucket table would be a list of docs which satisfy all MUST clauses. And note that all those docIds in the linked list should keep ascending order.
+
+Then, by scanning the linked list, subScorers can check the docID and either set its MUST_NOT bit or add one SHOULD hit count to it. In this step, subScorers' .advance() method should be used to skip a lot of docIDs.
+
+At last, a bucket collector can collect all target docs, by scanning the linked list.
+
+A sketch on how to implement procedures above, is as follows:
+
+    for each window do
+    Collect docs within the window range to make a linked list on bucket table with ConjunctionScorer;
+    currentDocID = bucketTable.firstDocID;
+    for each subScorer do
+    subScorer.advance(currentDocID)
+    if subScorer.docID() == currentDocID then
+    To set MUST_NOT bit or add SHOULD hit count according to subScorer's type;
+    endif
+    endfor
+    currentDocID = next(currentDocID);
+    Scan the linked list to collect target docs;
+    endfor
+
+And, as a side note, codes should be specified for the situation where there is no MUST clause in BooleanQuery.
+
+Improve the Heuristic for Scorer Decision
+
+Relevant codes to improve is around line #342 in BooleanQuery.java[too detail for the reviewr?] . What to do is to adjust the condition on returning BooleanScorer.
+
+It seems that, in most situations, the improved BooleanScorer performs better than BooleanScorer2. If that is true, just clear the condition of required.size() and minNrShouldMatch.
+
+However, I would like to figure out a more accurate rule. To do this, the code would be as follows:
+
+    cScorer = new ConjunctionScorer(this, required);
+    if !scoreDocsInOrder and topScorer then
+    if cScorer.cost() < ?x and minNrShouldMatch < ?y then
+    return new BooleanScorer(cScorer, required, optional, prohibited);
+    endif
+    endif
+
+By testing the benchmarks with different ?x and ?y, I can find a better rule for choosing suitable scoreer.
+
+[some brainstorm on detail rules? the pseudo code will be too simple here] 
+
+
+[you can add maillist links about your discussion with Mike, search in google about detailed implementations or design history of Lucene on BooleanQuery, and provide links as 'Reference' chapter here]
+[yes, add more links!]
+
+ 
+Schedule
+[consider to add one or two weeks as buffering. buffering weeks might like: implement xxx, since it is simple, it won't take you much time, but can keep the process up to date]
+
+My schedule is showed on Table 2. Being a student, I will have three exams at the end of this semester (June-July). It will take me some time, but I promise everything will follow the schedule.
+Table 2.  Project Schedule
+Timeline	Tasks
+April 21 - May 16 	
+
+- Get to know more about the code.
+
+- Discuss with the mentor about some confusing details on the code.
+
+- Get familiar with testing on benchmarks. [luceneutil]
+May 17 - May 23 	
+
+- Make the BooleanScorer support MUST clause without .advance() optimation.
+
+- Adjust the BooleanQuery to let BooleanScorer be applied even when it comes to MUST clause.
+
+- Test on benchmarks to see the performance changes.
+May 24 - May 31 	
+
+- Implement BooleanScorer with .advance() optimation.
+
+- Test on benchmarks to see the performance changes.
+June 1 - June 22 	
+
+- Check the tests.
+
+- File mid-term evaluations.
+June 23 - June 25 	
+
+- Submit mid-term evaluations.
+June 26 - July 19 	
+
+- With the code above, do tests on banchmarks with different arguments.
+
+- Analyze the test result and figure out the best arguments.
+July 20 - July 31 	
+
+- File the test report.
+August 1 - August 10 	
+
+- Do final tests and check the code..
+August 11 - August 17 	
+
+- Scrub code, write tests, improve documentation, etc.
+August 18 - August 20 	
+
+- Submit final evaluations.
+August 22 - August 23 	
+
+- Submit required code samples to Google.
+ 
+About Me
+
+I am studying for my Master Degree in Peking University, where I am majoring in Search Engine & Web Mining. In this semester, I am also trying to build a search engine with C++. You can fetch the newest version of my code from https://github.com/Da-Huang/Search-Engine.
+
+You can know more about me on http://www.linkedin.com/profile/view?id=308789048.
