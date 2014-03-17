@@ -30,7 +30,7 @@
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Quantifiable Results for the Apache Community</h2>
-<p class='sub1' style='text-indent:2em;margin:5px'>1) Faster BooleanQuery for lucene.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>1) Faster BooleanQuery for Apache Lucene.</p>
 <!--<p class='sub1' style='text-indent:2em;margin:5px'>2) More powerful and efficient BooleanScorer which supports .</p>
 -->
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
@@ -57,19 +57,21 @@ Beforing getting down to the optimation, I would like analyze the two Scorers fi
 <p class='sub1' style='text-indent:2em;margin:5px'>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query faster, but leave the docIDs out of order as result. Thus, BooleanScorer can <b>only</b> be as Top Scorer.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>2) BooleanScorer2 is implemented in a much more "tranditional" way. That is merging the Disjunction Query with a heap.</p>
 <p>In a conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm makes the BooleanScorer can <b>only</b> be as Top Scorer and unsuitable for Conjunction Query.</p>
-<p>As for the Top Scorer only problem, it is not a severe one, because most BooleanQuery does not have deep levels, and the costest Scorer is the Top Scorer. Thus, I prepare to solve the MUST clause.</p>
+<p>As for the Top Scorer only problem, it is not a severe one, because the top level of a boolean query is its main costly part. Further more, we can convert some costly parts of a boolean query to its top level, by rewriting it. Thus, I will pay most attention to resolving the MUST clauses problem.</p>
 
 <h3>Make BooleanScorer Support MUST Clause</h3>
 <p>In order to implement this function, the following problem should be solved:</p>
-<h4>1) How many MUST clause should BooleanScorer support?</h4>
+<h4>1) How to support MUST clauses in BooleanScorer?</h4>
 <div class='h4_content'>
-<p>Actually, the original design of BooleanScorer on last trunk can support no more than 32 MUST clauses, if <i>MASK</i> does not extend. Such design is not flexible enough, and may cost a lot on dealing with these clauses one by one.</p>
+<p>Actually, the original design of BooleanScorer on last trunk can support no more than 32 MUST clauses. This is because it uses a 32-bit value, <i>requiredMask</i>, to record which MUST clauses have been hit by a doc. There used to be a similar problem with MUST_NOT clauses, which is described in <a href='https://issues.apache.org/jira/browse/LUCENE-3510'>LUCENE-3510</a>. In a word, such design is not flexible enough, and may cost some time to scan un-hit pages (ie. those pages not hit all MUST clauses).</p>
 <p>My idea is to group up all MUST clauses so that it looks like there is just one MUST clause. For example:</p>
 <div class='code'><code style='border:1px dashed gray;padding:10px;border-radius:10px;margin-top:5px;margin-bottom:5px;background-color:#ecf5ff;display:table;'>
 a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 </code></div>
 <p>Apparently, the left part and the right part above are just the same BooleanQuery.</p>
-<p>However, when it comes to implementing, there is in fact no need to build a new BooleanClause for the MUST clauses in the query. The most natural way is to pass a new ConjunctionScorer to BooleanScorer. The ConjunctionScorer represents all the MUST clauses in the query, and meanwhile, it looks like only one MUST clause.</p>
+<p>However, when it comes to implementing, there is in fact no need to build a new BooleanClause for the MUST clauses in the query. One of the most natural ways is to pass a new ConjunctionScorer to BooleanScorer. The ConjunctionScorer represents all the MUST clauses in the query, and meanwhile, it looks like only one MUST clause.</p>
+<p>Another implementing plan is to pass all required scorers as a List to BooleanScorer, and do the similar thing as first plan in BooleanScorer.</p>
+<p>Both plans have advantages and disadvantages, and it is worth to explore both.</p>
 </div>
 
 <h4>2) How to collect documents in the method .score()?</h4>
@@ -80,15 +82,22 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 <p>A sketch on how to implement procedures above, is as follows:</p>
 <div class='code'><code style='border:1px dashed gray;padding:10px;border-radius:10px;margin-top:5px;margin-bottom:5px;background-color:#ecf5ff;display:table;'><ol>
 <li><b>for each</b> window <b>do</b></li>
-<li><div style='margin-left:2em'>Collect docs within the window range to make a linked list on bucket table with ConjunctionScorer;</div></li>
-<li><div style='margin-left:2em'>currentDocID = bucketTable.firstDocID;</div></li>
+<li><div style='margin-left:2em'>Collect docs within the window range as a linked list on bucket table with ConjunctionScorer;</div></li>
 <li><div style='margin-left:2em'><b>for each</b> subScorer <b>do</b></div></li>
-<li><div style='margin-left:4em'>subScorer.advance(currentDocID)</div></li>
-<li><div style='margin-left:4em'><b>if</b> subScorer.docID() == currentDocID <b>then</b></div></li>
-<li><div style='margin-left:6em'>To set MUST_NOT bit or add SHOULD hit count according to subScorer's type;</div></li>
-<li><div style='margin-left:4em'><b>endif</b></div></li>
+<li><div style='margin-left:4em'>currentDocID = bucketTable.firstDocID;</div></li>
+<li><div style='margin-left:4em'><b>while</b> subScorer.docID() in the window <b>and</b> currentDocID is valid <b>do</b></div></li>
+<li><div style='margin-left:6em'>subScorer.advance(currentDocID)</div></li>
+<li><div style='margin-left:6em'><b>if</b> subScorer.docID() == currentDocID <b>then</b></div></li>
+<li><div style='margin-left:8em'>Set MUST_NOT bit or add SHOULD hit count according to subScorer's type;</div></li>
+<!--
+<li><div style='margin-left:8em'>currentDocID = next(currentDocID);</div></li>
+<li><div style='margin-left:6em'><b>else</b></div></li>
+<li><div style='margin-left:8em'>currentDocID = advance(subScorer.docID());</div></li>
+-->
+<li><div style='margin-left:6em'><b>endif</b></div></li>
+<li><div style='margin-left:6em'>currentDocID = next(currentDocID);</div></li>
+<li><div style='margin-left:4em'><b>endwhile</b></div></li>
 <li><div style='margin-left:2em'><b>endfor</b></div></li>
-<li><div style='margin-left:2em'>currentDocID = next(currentDocID);</div></li>
 <li><div style='margin-left:2em'>Scan the linked list to collect target docs;</div></li>
 <li><b>endfor</b></li>
 </ol></code></div>
@@ -100,7 +109,7 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 </div>
 
 <h3>Improve the Rule for Choosing Scorer</h3>
-<p>Relevant codes to improve is around line #342 in BooleanQuery.java. What to do is just adjusting the condition on returning BooleanScorer.</p>
+<p>Relevant codes to improve is in BooleanQuery.BooleanWeight.score(). What to do is just to adjust the condition on returning BooleanScorer.</p>
 <p>It seems that, in most situations, the improved BooleanScorer performs better than BooleanScorer2. If that is true, just clear the condition of required.size() and minNrShouldMatch.</p>
 <p>However, I would like to figure out a more accurate rule. To do this, the code would be as follows:</p>
 <div id='code2' class='code'><code style='border:1px dashed gray;padding:10px;border-radius:10px;margin-top:5px;margin-bottom:5px;background-color:#ecf5ff;display:table;'><ol>
@@ -116,6 +125,13 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 
 <!--<h3>Improve .rewrite() in BooleanQuery</h3>
 As Only Top Scorer.-->
+<div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
+
+<h2>Reference</h2><ol>
+<li><a href='http://mail-archives.apache.org/mod_mbox/lucene-dev/201403.mbox/%3CCAL8PwkZ0Pp+VYDSzsPXrZJx3fYKeUbxn7UUEM6v5RUzZkOvTCg@mail.gmail.com%3E'>The Address of my discussion on the comunity</a></li>
+<li><a href='https://issues.apache.org/jira/browse/LUCENE-3510'>https://issues.apache.org/jira/browse/LUCENE-3510</a></li>
+<li>luceneutil</li>
+</ol>
 
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
@@ -131,20 +147,20 @@ As Only Top Scorer.-->
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px;' class='paragraph_td'>
 <p>- Get to know more about the code.</p>
 <p>- Discuss with the mentor about some confusing details on the code.</p>
-<p>- Get familiar with testing on benchmarks.</p>
+<p>- Get familiar with the testing platform, luceneutil.</p>
 </td></tr>
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>May 17 - May 23</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
 <p>- Make the BooleanScorer support MUST clause without .advance() optimation.</p>
 <p>- Adjust the BooleanQuery to let BooleanScorer be applied even when it comes to MUST clause.</p>
-<p>- Test on benchmarks to see the performance changes.</p>
+<p>- Test on luceneutil to see the performance changes.</p>
 </td></tr>
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>May 24 - May 31</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
 <p>- Implement BooleanScorer with .advance() optimation.</p>
-<p>- Test on benchmarks to see the performance changes.</p>
+<p>- Test on luceneutil to see the performance changes.</p>
 </td></tr>
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>June 1 - June 22</td>
