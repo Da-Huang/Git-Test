@@ -22,10 +22,11 @@
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Project Goals</h2>
-<p>The project shall deliver three components as follows:</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>1) BooleanScorer which supports MUST clause friendly i.e. <b>.advance()</b> should be used trickly to skip docs.</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>2) A better rule for BooleanQuery to choose Scorer.</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>3) Revelant Javadocs and reports.</p>
+<p>The project shall deliver four components as follows:</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>1) BooleanScorer which supports MUST clauses friendly.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>2) A mechanism which makes BooleanScorer can act as sub-scorer in the case where at least one MUST clause is present.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>3) A better rule for BooleanQuery to choose Scorer.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>4) Revelant Javadocs and reports.</p>
 
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
@@ -54,14 +55,16 @@ Beforing getting down to the optimation, I would like analyze the two Scorers fi
 </table>
 </div>
 <p>Table 1 illustrates some important natures of BooleanScorer and BooleanScorer2 on the current lucene trunk. The great difference between these two Scorer is due to their different ideas on implementation:</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query faster, but leave the docIDs out of order as result. Thus, BooleanScorer can <b>only</b> be as Top Scorer.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query faster, but leave the docIDs out of order as result. Thus, BooleanScorer can <b>only</b> act as Top Scorer.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>2) BooleanScorer2 is implemented in a much more "tranditional" way. That is merging the Disjunction Query with a heap.</p>
-<p>In a conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm makes the BooleanScorer can <b>only</b> be as Top Scorer and unsuitable for queries with MUST clauses.</p>
-<p>As for the Top Scorer only problem, it is not a severe one, because the top level of a boolean query is its main costly part. Further more, we can convert some costly parts of a boolean query to its top level, by rewriting it. Thus, I will pay most attention to resolving the MUST clauses problem.</p>
-<p>However, it seems that Top Scorer only problim can be resolved naturally, after MUST clauses is supported in BooleanScorer.</p>
+<p>In a conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm makes the BooleanScorer can <b>only</b> act as Top Scorer and unsuitable for queries with MUST clauses.</p>
+<p>In this project, I would focus on solving the MUST clauses problem first. Then, it can be found that, with the method used to solve the first problem, the Top Scorer only problem can naturally be solved in the case where at least one MUST clause is present.</p>
+
+<!--<p>As for the Top Scorer only problem, it is not a severe one, because the top level of a boolean query is its main costly part. Further more, we can convert some costly parts of a boolean query to its top level, by rewriting it. Thus, I will pay most attention to solving the MUST clauses problem.</p>
+<p>However, it seems that Top Scorer only problem can be solved naturally, after MUST clauses is supported in BooleanScorer.</p>-->
 
 <h3>Make BooleanScorer Support MUST Clause</h3>
-<p>In order to implement this function, the following problem should be solved:</p>
+<p>In order to implement this function, the following problem should be figured out:</p>
 <h4>1) How to support MUST clauses in BooleanScorer?</h4>
 <div class='h4_content'>
 <p>Actually, the original design of BooleanScorer on last trunk can support no more than 32 MUST clauses. This is because it uses a 32-bit value, <i>requiredMask</i>, to record which MUST clauses have been hit by a doc. There used to be a similar problem with MUST_NOT clauses, which is described in <a href='https://issues.apache.org/jira/browse/LUCENE-3510'>LUCENE-3510</a>. In a word, such design is not flexible enough, and may cost some time to scan un-hit pages (ie. those pages not hit all MUST clauses).</p>
@@ -103,12 +106,16 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 <li><b>endfor</b></li>
 </ol></code></div>
 </div>
-<p>It is amazing to find that those collected docIDs can keep ascending order with this method. It means that .advance(), .nextDoc() and other kernel methods for embedded scorer can be implemented. In a word, BooleanScorer can be as Not-Top Scorer, if it has MUST clauses to deal with.</p>
+<p>It is amazing to find that those collected docIDs can keep ascending order with this method. It means that .advance(), .nextDoc() and other kernel methods for embedded scorer can be implemented. In a word, BooleanScorer can act as sub-scorer, if it has MUST clauses to deal with.</p>
 
 <h4>3) Anything else to be careful?</h4>
 <div class='h4_content'>
 <p>Codes should be specified for the situation where there is no MUST clause in BooleanQuery.</p>
 </div>
+
+<h3>How can BooleanScorer act as Sub-Scorer</h3>
+If the last part 
+
 
 <h3>Improve the Rule for Choosing Scorer</h3>
 <p>Relevant codes to improve is in BooleanQuery.BooleanWeight.score(). What to do is to adjust the condition on returning BooleanScorer.</p>
