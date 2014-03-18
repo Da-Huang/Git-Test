@@ -23,7 +23,7 @@
 
 <h2>Project Goals</h2>
 <p>The project shall deliver four components as follows:</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>1) A mechanism which makes BooleanScorer support MUST clauses friendly ie. skipping the posting list trickly.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>1) A mechanism which makes BooleanScorer support MUST clauses friendly ie. skipping the posting list trickily.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>2) A more complete BooleanScorer which can act as Sub-Scorer in the case where at least one MUST clause is present.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>3) A better rule for BooleanQuery to choose Scorer.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>4) Revelant Javadocs and reports.</p>
@@ -38,7 +38,7 @@
 
 <h2>Project Details</h2>
 <h3>BooleanScorer vs. BooleanScorer2</h3>
-Beforing getting down to the optimation, I would like analyze the two Scorers first.
+Beforing getting down to the optimization, I would like analyze the two Scorers first.
 <div class='table_div' style='display:table'>
 <div id='table1' class='tag' style='text-align:center;font-weight:bold;'>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</div>
 <table style='border:1px solid'>
@@ -56,7 +56,7 @@ Beforing getting down to the optimation, I would like analyze the two Scorers fi
 </div>
 <p>Table 1 illustrates some important natures of BooleanScorer and BooleanScorer2 on the current lucene trunk. The great difference between these two Scorer is due to their different ideas on implementation:</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>1) BooleanScorer is implemented by using an array to score windows of 2K. This way can make Disjunction Query faster, but leave the docIDs out of order as result. Thus, BooleanScorer can <b>only</b> act as Top Scorer.</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>2) BooleanScorer2 is implemented in a much more "tranditional" way. That is merging the Disjunction Query with a heap.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>2) BooleanScorer2 is implemented in a much more "traditional" way. That is merging the Disjunction Query with a heap.</p>
 <p>In a conclusion, BooleanScorer applies a tricky algorithm to make Disjunction Query faster, but the algorithm makes the BooleanScorer can <b>only</b> act as Top Scorer and unsuitable for queries with MUST clauses.</p>
 <p>In this project, I would focus on solving the MUST clauses problem first. Then, it could be found that, with the method used to solve the first problem, the Top Scorer only problem can naturally be solved in the case where at least one MUST clause is present.</p>
 
@@ -139,7 +139,7 @@ In <a href='#part2'>last part</a>, I have proposed a mechanism for BooleanScorer
 <h3>Improve the Rule for Choosing Scorer</h3>
 <p>Relevant code to improve is in BooleanQuery.BooleanWeight.score(). What to do is to adjust the condition on returning BooleanScorer.</p>
 <p>It seems that, when the BooleanScorer acts as Top Scorer, it would not perform worse than BooleanScorer2, because the tricky calling on the .advance() can skip documents as many as BooleanScorer2 does.</p>
-<p>However, when BooleanScorer acts as a Sub-Scorer, it may perform worse than BooleanScorer2. This is because BooleanScorer would calculate all data in a 2K window everytime the data needed is out of the window range. And those data in the window may actually not all useful.</p>
+<p>However, when BooleanScorer acts as a Sub-Scorer, it may perform worse than BooleanScorer2. This is because BooleanScorer would calculate all data in a 2K window every time the data needed is out of the window range. And those data in the window may actually not all useful.</p>
 <p>This is one of the examples, when BooleanScorer will calculate useless data.</p>
 
 <div class='table_div' style='display:table'>
@@ -156,7 +156,7 @@ Conjunc |-Y-----------|-------------|--Y----------|--Y----------|<br/>
 <div id='figure1' class='tag' style='text-align:center;font-weight:bold;'>Figure 1.&nbsp;&nbsp;A case where BooleanScorer performs not well</div>
 </div>
 
-<p>Assume that we want to make a conjunction from Scorer1 and Scorer2. If Scorer2 is a BooleanScorer, it would cost a lot on calculating the all docs hit by Scorer2 on bucketTable #1,#4,#5. However, it's aparent that most docs on bucketTable #1,#4,#5 are useless; that is to say, BooleanScorer does a lot of useless works in this case.</p>
+<p>Assume that we want to make a conjunction from Scorer1 and Scorer2. If Scorer2 is a BooleanScorer, it would cost a lot on calculating the all docs hit by Scorer2 on bucketTable #1,#4,#5. However, it's apparent that most docs on bucketTable #1,#4,#5 are useless; that is to say, BooleanScorer does a lot of useless works in this case.</p>
 <p>In order to prevent this, I have to put forward a rule for choosing which Scorer.</p>
 <p>From the example above, we can discover that when it hits a lot of docs, it would be better to choose BooleanScorer2.</p>
 <p>A sketch would be something as follows:</p>
@@ -238,13 +238,13 @@ As Only Top Scorer.-->
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>June 26 - July 19</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
-<p>- With the <a href='#code3'>code in last part</a>, do tests on banchmarks with different arguments.</p>
+<p>- With the <a href='#code3'>code in last part</a>, do tests on banchmark with different arguments.</p>
 <p>- Analyze the test result and figure out the best arguments.</p>
 </td></tr>
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>July 20 - July 31</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
-<p>- Do more tests to assure the corectness and check the code.</p>
+<p>- Do more tests to assure the correctness and check the code.</p>
 </td></tr>
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>August 1 - August 10</td>
