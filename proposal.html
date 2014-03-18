@@ -80,13 +80,13 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 
 <h4>2) How to collect documents in the method .score()?</h4>
 <div class='h4_content'>
-<p>In order to collect documents efficiently, docs collected by the ConjunctionScorer should be linked up in the bucket table firstly. After that, the linked list in the bucket table would be a list of docs which satisfy all MUST clauses. <b>ATTENTION</b>: <u>docs' id in the linked list should be in ascending order.</u></p>
+<p>In order to collect documents efficiently, documents collected by the ConjunctionScorer should be linked up in the bucket table firstly. After that, the linked list in the bucket table would be a list of documents which satisfy all MUST clauses. <b>ATTENTION</b>: <u>docIDs in the linked list should be in ascending order.</u></p>
 <p>Then, by scanning the linked list, subScorers can check the docID and either set its MUST_NOT bit or add one SHOULD hit count to it. In this step, subScorers' .advance() method should be used to skip a lot of docIDs.</p>
 <p>At last, a bucket collector can collect all target docs, by scanning the linked list.</p>
 <p>A sketch on how to implement procedures above, is as follows:</p>
 <div class='code'><code style='border:1px dashed gray;padding:10px;border-radius:10px;margin-top:5px;margin-bottom:5px;background-color:#ecf5ff;display:table;'><ol>
 <li><b>for each</b> window <b>do</b></li>
-<li><div style='margin-left:2em'>Collect docs within the window range as a linked list on bucket table with ConjunctionScorer;</div></li>
+<li><div style='margin-left:2em'>Collect documents within the window range as a linked list on bucket table with ConjunctionScorer;</div></li>
 <li><div style='margin-left:2em'><b>for each</b> subScorer <b>do</b></div></li>
 <li><div style='margin-left:4em'>currentDocID = bucketTable.firstDocID;</div></li>
 <li><div style='margin-left:4em'><b>while</b> subScorer.docID() in the window <b>and</b> currentDocID is valid <b>do</b></div></li>
@@ -139,10 +139,10 @@ In <a href='#part2'>last part</a>, I have proposed a mechanism for BooleanScorer
 <h3>Improve the Rule for Choosing Scorer</h3>
 <p>Relevant code to improve is in BooleanQuery.BooleanWeight.score(). What to do is to adjust the condition on returning BooleanScorer.</p>
 <p>It seems that, when the BooleanScorer acts as Top Scorer, it would not perform worse than BooleanScorer2, because the tricky calling on the .advance() can skip documents as many as BooleanScorer2 does.</p>
-<p>However, when BooleanScorer acts as a Sub-Scorer, it may perform worse than BooleanScorer2. This is because BooleanScorer would calculate all data in a 2K window every time the data needed is out of the window range. And those data in the window may actually not all useful.</p>
-<p>This is one of the examples, when BooleanScorer will calculate useless data.</p>
+<p>However, when BooleanScorer acts as a Sub-Scorer, it may perform worse than BooleanScorer2. This is because BooleanScorer would calculate all docIDs in a 2K window every time the current window misses a requested docID. And those docIDs in the window may actually not all useful.</p>
+<p>This is one of the cases where BooleanScorer would calculate a lot of useless data.</p>
 
-<div class='table_div' style='display:table'>
+<div id='figure1' class='table_div' style='display:table'>
 <div class='code'><code style='border:1px dashed gray;padding:10px;border-radius:10px;margin-top:5px;margin-bottom:5px;background-color:#ecf5ff;display:table;'>
 ------- |--window-#1--|--window-#2--|--window-#3--|--window-#4--|<br/>
 ------- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+<br/>
@@ -153,24 +153,28 @@ Scorer2 |-Y--Y---Y-Y--|--Y--Y--Y--Y-|--Y-Y-Y-Y--Y-|--YY-Y--Y-Y--|<br/>
 Conjunc |-Y-----------|-------------|--Y----------|--Y----------|<br/>
 ------- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+<br/>
 </code></div>
-<div id='figure1' class='tag' style='text-align:center;font-weight:bold;'>Figure 1.&nbsp;&nbsp;A case where BooleanScorer performs not well</div>
+<div class='tag' style='text-align:center;font-weight:bold;'>Figure 1.&nbsp;&nbsp;A case where it performs not well when Scorer2 is BooleanScorer</div>
 </div>
-
-<p>Assume that we want to make a conjunction from Scorer1 and Scorer2. If Scorer2 is a BooleanScorer, it would cost a lot on calculating the all docs hit by Scorer2 on bucketTable #1,#4,#5. However, it's apparent that most docs on bucketTable #1,#4,#5 are useless; that is to say, BooleanScorer does a lot of useless works in this case.</p>
-<p>In order to prevent this, I have to put forward a rule for choosing which Scorer.</p>
-<p>From the example above, we can discover that when it hits a lot of docs, it would be better to choose BooleanScorer2.</p>
+<p>Window #i represents the i-th bucket window dealed by BooleanScorer and each line lead by a scorer represents whether each document is hit by this scorer. 'Y' represents that document is hit, while '-' represents not.</p>
+<p>Assume that we want to make a conjunction from Scorer1 and Scorer2. If Scorer2 is a BooleanScorer, it would cost a lot on calculating all documents hit by Scorer2 in window #1,#3,#4. However, it's apparent that most documents on bucketTable #1,#3,#4 are useless; that is to say, BooleanScorer does a lot of useless works in this case.</p>
+<p>In order to prevent this, it's worth putting forward a rule for choosing which Scorer to be applied.</p>
+<p>By observing the example as <a href='#figure1'>Figure 1</a> shows, we can discover that when a query, which will be used for conjunction, hits a lot of documents, it would be better to not choose BooleanScorer, but BooleanScorer2.</p>
 <p>A sketch would be something as follows:</p>
 <div id='code3' class='code'><code style='border:1px dashed gray;padding:10px;border-radius:10px;margin-top:5px;margin-bottom:5px;background-color:#ecf5ff;display:table;'><ol>
-<li>cScorer = <b>new</b> ConjunctionScorer(required);</li>
-<li><b>if</b> !scoreDocsInOrder <b>and</b> topScorer <b>then</b></li>
-<li><div style='margin-left:2em'><b>return new</b> BooleanScorer(cScorer, required, optional, prohibited);</div></li>
+<li><b>if</b> required == <b>null and</b> !scoreDocsInOrder <b>and</b> topScorer <b>then</b></li>
+<li><div style='margin-left:2em'><b>return new</b> BooleanScorer(<b>null</b>, optional, prohibited);</div></li>
 <li><b>endif</b></li>
-<li><b>if</b> cScorer.cost() &lt; ?x <b>and</b> minNrShouldMatch &lt; ?y <b>then</b></li>
+<li><b>if</b> required == <b>null then</b></li>
+<li><div style='margin-left:2em'><b>return new</b> BooleanScorer2(required, optional, prohibited);
+<li><b>endif</b></li>
+<li>cScorer = <b>new</b> ConjunctionScorer(required);</li>
+<li><b>if</b> - minNrShouldMatch * log &alpha; + log(required.cost()) &lt; &gamma; <b>then</b></li>
 <li><div style='margin-left:2em'><b>return new</b> BooleanScorer(cScorer, optional, prohibited);</div></li>
 <li><b>endif</b></li>
 <li><b>return</b> BooleanScorer2(required, optional, prohibited);
 </ol></code></div>
 </div>
+<p>The condition "- minNrShouldMatch * log(required.cost()) &lt; ?v" is drived from "required.cost() * exp(- minNrShouldMatch) &lt; ?v"</p>. The formular means that required.cost() is an estimated value of the 
 <!--<p>It seems that, in most situations, the improved BooleanScorer performs better than BooleanScorer2. If that is true, just clear the condition of required.size() and minNrShouldMatch.</p>
 <p>However, I would like to figure out a more accurate rule. To do this, the code would be as follows:</p>
 <div id='code3' class='code'><code style='border:1px dashed gray;padding:10px;border-radius:10px;margin-top:5px;margin-bottom:5px;background-color:#ecf5ff;display:table;'><ol>
