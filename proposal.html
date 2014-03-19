@@ -1,11 +1,11 @@
 <h1>LUCENE-4396: BooleanScorer should sometimes be used for MUST clauses</h1>
-<p>I aim to improve the performance of BooleanQuery by implementing a better rule for choosing Scorer. In order to support the rule, my proposed work also includes a new mechanism for BooleanScorer to support MUST clauses friendly, and improved implementation of BooleanScorer which makes it able to act as Sub-Scorer on some conditions. I'll also compare the performance between my new rule and the old one.</p>
+<p>I aim to improve the performance of BooleanQuery by implementing a better rule for choosing Scorer. In order to support the new rule, my proposed work also includes a new mechanism for BooleanScorer to support MUST clauses friendly, and improved implementation of BooleanScorer which makes it able to act as Sub-Scorer on some conditions. I'll also compare the performance between my new rule and the old one.</p>
 <!--
 <p>Today Lucene only uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But it is suspected that unless the MUST clauses have very low hit count compared to the other clauses, that BooleanScorer would perform better than BooleanScorer2. The most challenging part might be the heuristics on when to use which.</p>-->
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <body style='font-family:monospace;text-align:justify;text-justify:distribute-all-lines;'>
-<p>Proposal Title: BooleanScorer should sometimes be used for MUST clauses in Lucene</p>
+<p>Proposal Title: BooleanScorer should sometimes be used for MUST clauses in Apache Lucene</p>
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 <p>Student Name: Da Huang</p>
 <p>Student E-mail: dhuang.cn@gmail.com</p>
@@ -17,9 +17,10 @@
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Introduction to the Project</h2>
-<p><b>BooleanQuery</b> is one of the most important types of query in an Information Retrieval System. Lucene has done several optimizations for that. The kernel modular to implement BooleanQuery in lucene is <b>Scorer</b>, which can not only score a document, but also provide methods for collecting hit documents. There are mainly two Scorers, <b>BooleanScorer</b> and <b>BooleanScorer2</b> (Their natures can be found in <a href='#table1'>Table 1</a>), to deal with BooleanQuery on current trunk. The class BooleanQuery would choose one of them as the scorer returning to the its caller.</p>
-<p>Today lucene <b>only</b> uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But such way to make the choice is too easy and naive. What I would like to do in this project is to develop a more clever way for BooleanQuery to choose which Scorer to be uses.</p>
-<p>The key to implementing the project is to make <b>BooleanScorer</b> support MUST clause, and then check the influence of MUST clause on BooleanScorer's speed by testing.</p>
+<p><b>BooleanQuery</b> is one of the most important query types in an Information Retrieval System. Lucene has done several optimizations for that. The kernel component for supporting BooleanQuery in lucene is <b>Scorer</b>, which can not only score a document, but also provide methods for collecting hit documents. There are mainly two Scorers, <b>BooleanScorer</b> and <b>BooleanScorer2</b> (Their natures can be found in <a href='#table1'>Table 1</a>), to deal with BooleanQuery on current trunk. The class BooleanQuery would choose one of them as the scorer returned to the caller.</p>
+<p>Today lucene <b>only</b> uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But such rule to make the choice is too simple and naive. What I would like to do in this project is to develop a better rule for BooleanQuery to choose which Scorer to be used.</p>
+<p>The key to completing this project is to make <b>BooleanScorer</b> able to support MUST clause, and act as Sub-Scorer on some conditions. 
+And then check the influence of MUST clause on BooleanScorer's speed by testing.</p>
 
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
