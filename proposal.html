@@ -1,5 +1,7 @@
 <h1>LUCENE-4396: BooleanScorer should sometimes be used for MUST clauses</h1>
-<p>Today Lucene only uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But it is suspected that unless the MUST clauses have very low hit count compared to the other clauses, that BooleanScorer would perform better than BooleanScorer2. The most challenging part might be the heuristics on when to use which.</p>
+<p>I aim to improve the performance of BooleanQuery by implementing a better rule for choosing Scorer. In order to support the rule, my proposed work also includes a new mechanism for BooleanScorer to support MUST clauses friendly, and improved implementation of BooleanScorer which makes it able to act as Sub-Scorer on some conditions. I'll also compare the performance between my new rule and the old one.</p>
+<!--
+<p>Today Lucene only uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But it is suspected that unless the MUST clauses have very low hit count compared to the other clauses, that BooleanScorer would perform better than BooleanScorer2. The most challenging part might be the heuristics on when to use which.</p>-->
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <body style='font-family:monospace;text-align:justify;text-justify:distribute-all-lines;'>
@@ -23,10 +25,10 @@
 
 <h2>Project Goals</h2>
 <p>The project shall deliver four components as follows:</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>1) A mechanism which makes BooleanScorer support MUST clauses friendly ie. skipping the posting list trickily.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>1) A mechanism which makes BooleanScorer support MUST clauses friendly i.e. skipping the posting list trickily.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>2) A more complete BooleanScorer which can act as Sub-Scorer in the case where at least one MUST clause is present.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>3) A better rule for BooleanQuery to choose Scorer.</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>4) Revelant Javadocs and reports.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>4) Relevant Javadocs and reports.</p>
 
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
@@ -38,7 +40,7 @@
 
 <h2>Project Details</h2>
 <h3>BooleanScorer vs. BooleanScorer2</h3>
-Beforing getting down to the optimization, I would like analyze the two Scorers first.
+Before getting down to the optimization, I would like analyze the two Scorers first.
 <div class='table_div' style='display:table'>
 <div id='table1' class='tag' style='text-align:center;font-weight:bold;'>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</div>
 <table style='border:1px solid'>
@@ -67,7 +69,7 @@ Beforing getting down to the optimization, I would like analyze the two Scorers 
 <p>In order to implement this function, the following problem should be figured out:</p>
 <h4>1) How to support MUST clauses in BooleanScorer?</h4>
 <div class='h4_content'>
-<p>Actually, the original design of BooleanScorer on last trunk can support no more than 32 MUST clauses. This is because it uses a 32-bit value, <i>requiredMask</i>, to record which MUST clauses have matched a doc. There used to be a similar problem with MUST_NOT clauses, which is described in <a href='https://issues.apache.org/jira/browse/LUCENE-3510'>LUCENE-3510</a>. In a word, such design is not flexible enough, and may cost some time to scan un-hit documents (ie. those documents not matchs all MUST clauses).</p>
+<p>Actually, the original design of BooleanScorer on last trunk can support no more than 32 MUST clauses. This is because it uses a 32-bit value, <i>requiredMask</i>, to record which MUST clauses have matched a doc. There used to be a similar problem with MUST_NOT clauses, which is described in <a href='https://issues.apache.org/jira/browse/LUCENE-3510'>LUCENE-3510</a>. In a word, such design is not flexible enough, and may cost some time to scan unmatched documents (i.e. those documents not matches all MUST clauses).</p>
 <p>My idea is to group up all MUST clauses so that it looks like there is just one MUST clause. For example:</p>
 <div class='code'><code style='border:1px dashed gray;padding:10px;border-radius:10px;margin-top:5px;margin-bottom:5px;background-color:#ecf5ff;display:table;'>
 a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
@@ -176,8 +178,8 @@ Conjunc |-Y-----------|-------------|--Y----------|--Y----------|<br/>
 </div>
 <p>The condition "minNrShouldMatch * log &alpha; + log(required.cost()) &lt; &gamma;" is drived as follows:</p>
 <p>required.cost() is generally an upper bound of the number of documents required clauses might match, and I assume that the number of matched documents would have a (1 - &alpha;) discount every time minNrShouldMatch increases by 1.</p>
-<p>Then, the estimated number of matched documents is "required.cost() * &alpha; ^ minNrShouldMatch". Take its logarithm, ant it would be "minNrShouldMatch * log &alpha; + log(required.cost())".</p>
-<p>Personally, I would guess that &alpha; is about 90%. However, a better value needs more experiments to be determined.</p>
+<p>Then, the estimated number of matched documents is "required.cost() * &alpha; ^ minNrShouldMatch". Take its logarithm, and it would be "minNrShouldMatch * log &alpha; + log(required.cost())".</p>
+<p>Personally, I would guess that &alpha; is around 90%. However, a better value needs more experiments to be determined.</p>
 <p>The value of &gamma; needs a lot of experiments to be determined.</p>
 
 
@@ -248,7 +250,7 @@ As Only Top Scorer.-->
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>June 26 - July 19</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
-<p>- With the <a href='#code3'>code in last part</a>, do tests on banchmark with different arguments.</p>
+<p>- With the <a href='#code3'>code in last part</a>, do tests on benchmark with different arguments.</p>
 <p>- Analyze the test result and figure out the best arguments.</p>
 </td></tr>
 <tr>
