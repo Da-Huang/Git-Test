@@ -19,8 +19,7 @@
 <h2>Introduction to the Project</h2>
 <p><b>BooleanQuery</b> is one of the most important query types in an Information Retrieval System. Lucene has done several optimizations for that. The kernel component for supporting BooleanQuery in lucene is <b>Scorer</b>, which can not only score a document, but also provide methods for collecting hit documents. There are mainly two Scorers, <b>BooleanScorer</b> and <b>BooleanScorer2</b> (Their natures can be found in <a href='#table1'>Table 1</a>), to deal with BooleanQuery on current trunk. The class BooleanQuery would choose one of them as the scorer returned to the caller.</p>
 <p>Today lucene <b>only</b> uses BooleanScorer if the query consists of SHOULD and MUST_NOT. If there is one or more MUST clauses lucene always uses BooleanScorer2. But such rule to make the choice is too simple and naive. What I would like to do in this project is to develop a better rule for BooleanQuery to choose which Scorer to be used.</p>
-<p>The key to completing this project is to make <b>BooleanScorer</b> able to support MUST clause, and act as Sub-Scorer on some conditions. 
-And then check the influence of MUST clause on BooleanScorer's speed by testing.</p>
+<p>The key to completing this project is to make BooleanScorer able to support MUST clause, and act as Sub-Scorer on some conditions, because the old implementation does not fit the new rule.</p>
 
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
@@ -29,19 +28,19 @@ And then check the influence of MUST clause on BooleanScorer's speed by testing.
 <p class='sub1' style='text-indent:2em;margin:5px'>1) A mechanism which makes BooleanScorer support MUST clauses friendly i.e. skipping the posting list trickily.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>2) A more complete BooleanScorer which can act as Sub-Scorer in the case where at least one MUST clause is present.</p>
 <p class='sub1' style='text-indent:2em;margin:5px'>3) A better rule for BooleanQuery to choose Scorer.</p>
-<p class='sub1' style='text-indent:2em;margin:5px'>4) Relevant Javadocs and reports.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>4) Relevant tests, Javadocs and reports.</p>
 
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Quantifiable Results for the Apache Community</h2>
-<p class='sub1' style='text-indent:2em;margin:5px'>1) More efficient and powerful BooleanQuery for Apache Lucene.</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>More efficient and powerful BooleanQuery for Apache Lucene.</p>
 <!--<p class='sub1' style='text-indent:2em;margin:5px'>2) More powerful and efficient BooleanScorer which supports .</p>
 -->
 <div class='dividor' style='height:0;border:1px solid gray;margin-top:20px;margin-bottom:20px;'></div>
 
 <h2>Project Details</h2>
 <h3>BooleanScorer vs. BooleanScorer2</h3>
-Before getting down to the optimization, I would like analyze the two Scorers first.
+Before getting down to the optimization, I would like analyze the two main Scorers used in BooleanQuery first.
 <div class='table_div' style='display:table'>
 <div id='table1' class='tag' style='text-align:center;font-weight:bold;'>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</div>
 <table style='border:1px solid'>
@@ -112,7 +111,9 @@ a +b c -d +e f &lt;=&gt; +(+b +e) a c f -d
 
 <h4>3) Anything else to be careful?</h4>
 <div class='h4_content'>
-<p>Code should be specified for the situation where there is no MUST clause in BooleanQuery.</p>
+<p>Code should be specified for the situation where 
+<p class='sub1' style='text-indent:2em;margin:5px'>1' there is no MUST clause in BooleanQuery;</p>
+<p class='sub1' style='text-indent:2em;margin:5px'>2' there are only MUST clauses in BooleanQuery;</p>
 </div>
 
 <h3>How can BooleanScorer act as Sub-Scorer</h3>
