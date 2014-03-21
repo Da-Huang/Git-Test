@@ -44,14 +44,13 @@ Before getting down to the optimization, I would like analyze the two main Score
 <div class='table_div' style='display:table'>
 <div id='table1' class='tag' style='text-align:center;font-weight:bold;'>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</div>
 <table style='border:1px solid'>
-<tr><th style='border:1px solid;'>Scorer</th>
-<th style='border:1px solid;'>Usability</th><th style='border:1px solid;'>Disjunction Query</th><th style='border:1px solid;'>Conjunction Query</th>
-<th style='border:1px solid;'>MUST Clause</th>
+<tr><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Scorer</th>
+<th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Usability</th><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Disjunction Query</th><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Conjunction Query</th><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>MUST Clause</th>
 </tr>
-<tr><th style='border:1px solid;'>BooleanScorer</th>
-<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>As Top Scorer Only</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Faster</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Not Supported Now</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Used to, Not Now</td>
+<tr><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>BooleanScorer</th>
+<td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>As Top Scorer Only</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Faster</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Not Support</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Used to Support</td>
 </tr>
-<tr><th style='border:1px solid;'>BooleanScorer2</th>
+<tr><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>BooleanScorer2</th>
 <td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>No Level Limitation</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Slower</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Fast</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Yes</td>
 </tr>
 </table>
@@ -184,6 +183,10 @@ Conjunc |-Y-----------|-------------|--Y----------|--Y----------|<br/>
 <p>Personally, I would guess that &alpha; is around 90%. However, a better value needs more experiments to be determined.</p>
 <p>The value of &gamma; needs a lot of experiments to be determined.</p>
 
+<h3>Supplementary Notes</h3>
+<p>Relevant code has changed on the trunk, since this proposal was submitted. The main change is breaking out BulkScorer from Scorer. And BooleanScorer is extended from BulkScorer which does not expose .advance(), .nextDoc(), etc.</p>
+<p>Thus, it is necessary to rename the current BooleanScorer to BooleanBulkScorer, and create a new BooleanScorer extended from Scorer.</p>
+<p>Besides, the method .scorer() in BooleanQuery.BooleanWeight is divided into .scorer() and .bulkScorer(). The latter one is specified for Top Scorer. Therefore, <a href='#code3'>the heuristic code for .scorer()</a> should also be divided in the same way.</p>
 
 <!--<p>It seems that, in most situations, the improved BooleanScorer performs better than BooleanScorer2. If that is true, just clear the condition of required.size() and minNrShouldMatch.</p>
 <p>However, I would like to figure out a more accurate rule. To do this, the code would be as follows:</p>
@@ -217,13 +220,18 @@ As Only Top Scorer.-->
 <div class='table_div' style='display:table'>
 <div class='tag' style='text-align:center;font-weight:bold;'>Table 2.&nbsp;&nbsp;Project Schedule</div>
 <table style='border:1px solid'>
-<tr><th style='border:1px solid;'>Timeline</th><th style='border:1px solid;'>Tasks</th></tr>
+<tr><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Timeline</th><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Tasks</th></tr>
 <tr>
-<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>April 21 - May 16</td>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>April 11 - May 11</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px;' class='paragraph_td'>
 <p>- Get to know more about the code.</p>
 <p>- Discuss with the mentor about some confusing details on the code.</p>
 <p>- Get familiar with the testing platform, <a href='https://code.google.com/a/apache-extras.org/p/luceneutil/?redir=1'>luceneutil</a>.</p>
+</td></tr>
+<td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>May 12 - May 16</td>
+<td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px;' class='paragraph_td'>
+<p>- Rename BooleanScorer to BooleanBulkScorer.</p>
+<p>- Create a new BooleanScorer.</p>
 </td></tr>
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>May 17 - May 23</td>
@@ -252,7 +260,7 @@ As Only Top Scorer.-->
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>June 26 - July 19</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px' class='paragraph_td'>
-<p>- With the <a href='#code3'>code showed in last part</a>, do tests on benchmark with different arguments.</p>
+<p>- With <a href='#code3'>the heuristic code for .scorer()</a>, do tests on benchmark with different arguments.</p>
 <p>- Analyze the test result and figure out the best arguments.</p>
 </td></tr>
 <tr>
