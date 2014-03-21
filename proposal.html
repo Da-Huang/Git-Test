@@ -141,7 +141,7 @@ In <a href='#part2'>last part</a>, I have proposed a new mechanism for BooleanSc
 </div>
 
 <h3>Improve the Rule for Choosing Scorer</h3>
-<p>Relevant code to improve is in BooleanQuery.BooleanWeight.score(). What to do is to adjust the condition on returning BooleanScorer.</p>
+<p>Relevant code to improve is in BooleanQuery.BooleanWeight.scorer(). What to do is to adjust the condition on returning BooleanScorer.</p>
 <p>It seems that, when the BooleanScorer acts as Top Scorer, it would not perform worse than BooleanScorer2, because the tricky calling on .advance() can skip documents as many as BooleanScorer2 does.</p>
 <p>However, when BooleanScorer acts as a Sub-Scorer, it may perform worse than BooleanScorer2. This is because BooleanScorer would calculate all docIDs in a 2K window every time the current window misses a requested docID. And those docIDs in the window may actually not all useful.</p>
 <p>Following is one of the cases where BooleanScorer would calculate a lot of useless data.</p>
