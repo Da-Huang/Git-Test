@@ -44,13 +44,13 @@ Before getting down to the optimization, I would like analyze the two main Score
 <div class='table_div' style='display:table'>
 <div id='table1' class='tag' style='text-align:center;font-weight:bold;'>Table 1.&nbsp;&nbsp;BooleanScorer vs. BooleanScorer2 on current lucene trunk</div>
 <table style='border:1px solid'>
-<tr><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Scorer</th>
-<th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Usability</th><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Disjunction Query</th><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Conjunction Query</th><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>MUST Clause</th>
+<tr><th style='border:1px solid'>Scorer</th>
+<th style='border:1px solid'>Usability</th><th style='border:1px solid'>Disjunction Query</th><th style='border:1px solid'>Conjunction Query</th><th style='border:1px solid'>MUST Clause</th>
 </tr>
-<tr><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>BooleanScorer</th>
+<tr><th style='border:1px solid'>BooleanScorer</th>
 <td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>As Top Scorer Only</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Faster</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Not Support</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Used to Support</td>
 </tr>
-<tr><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>BooleanScorer2</th>
+<tr><th style='border:1px solid'>BooleanScorer2</th>
 <td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>No Level Limitation</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Slower</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Fast</td><td style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Yes</td>
 </tr>
 </table>
@@ -220,7 +220,7 @@ As Only Top Scorer.-->
 <div class='table_div' style='display:table'>
 <div class='tag' style='text-align:center;font-weight:bold;'>Table 2.&nbsp;&nbsp;Project Schedule</div>
 <table style='border:1px solid'>
-<tr><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Timeline</th><th style='border:1px solid;text-align:center;padding-left:10px;padding-right:10px'>Tasks</th></tr>
+<tr><th style='border:1px solid'>Timeline</th><th style='border:1px solid'>Tasks</th></tr>
 <tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>April 11 - May 11</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px;' class='paragraph_td'>
@@ -228,6 +228,7 @@ As Only Top Scorer.-->
 <p>- Discuss with the mentor about some confusing details on the code.</p>
 <p>- Get familiar with the testing platform, <a href='https://code.google.com/a/apache-extras.org/p/luceneutil/?redir=1'>luceneutil</a>.</p>
 </td></tr>
+<tr>
 <td style='border:1px solid;vertical-align:middle;text-align:center;padding-left:10px;padding-right:10px'>May 12 - May 16</td>
 <td style='border:1px solid;text-align:left;padding-left:10px;padding-right:10px;' class='paragraph_td'>
 <p>- Rename BooleanScorer to BooleanBulkScorer.</p>
