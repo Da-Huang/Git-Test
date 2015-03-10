@@ -1,2 +1,0 @@
-#include <maint>
-using namespace
